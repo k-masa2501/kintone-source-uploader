@@ -1,5 +1,5 @@
 {
-    "app": 1,
+    "app": 100,
     "guest_space_id": 0,
     "scope": "ALL",
     "desktop": {
@@ -11,13 +11,7 @@
             {
                 "type": "FILE",
                 "file": {
-                    "name": "js/desktop/desktop1.js"
-                }
-            },
-            {
-                "type": "FILE",
-                "file": {
-                    "name": "js/desktop/desktop2.js"
+                    "name": "js/desktop/desktop.js"
                 }
             }
         ],
@@ -29,13 +23,7 @@
             {
                 "type": "FILE",
                 "file": {
-                    "name": "css/desktop1.css"
-                }
-            },
-            {
-                "type": "FILE",
-                "file": {
-                    "name": "css/desktop2.css"
+                    "name": "css/desktop.css"
                 }
             }
         ]
@@ -49,13 +37,7 @@
             {
                 "type": "FILE",
                 "file": {
-                    "name": "js/mobile/mobile1.js"
-                }
-            },
-            {
-                "type": "FILE",
-                "file": {
-                    "name": "js/mobile/mobile2.js"
+                    "name": "js/mobile/mobile.js"
                 }
             }
         ] 

@@ -108,7 +108,7 @@ function upload(page, lang) {
         console.log(`\nTrying to desktop js upload..`);
         const desktopJs = yield jsCssItem[0].$('.plupload > input[type="file"]');
         if (desktopJs == null) {
-            throw new Error('input[type="file"] cannot find');
+			throw new Error('input[type="file"] cannot find');
         }
 
         for (var i2 = 0, len = manifest.json.desktop.js.length; i2 < len; i2++) {
@@ -116,13 +116,14 @@ function upload(page, lang) {
             if (manifest.fileCheck(`${manifest.path}/${manifest.json.desktop.js[i2]}`)){
                 yield desktopJs.uploadFile(`${manifest.path}/${manifest.json.desktop.js[i2]}`);
             }else{
-                console.warn(`SKIP=>[${manifest.json.desktop.js[i2]}] does not exist.`);
-                continue;
+                console.error(`Abort upload!! [${manifest.json.desktop.js[i2]}] does not exist.`);
+                return false;
             }
             
             yield sleep(100);
             if (yield page.$("#jsFiles_DESKTOP-container + .input-error-cybozu")) {
-                console.warn(`SKIP=>[${manifest.json.desktop.js[i2]}]：${msg('Upload_NotPermittedFormat')}`);
+                console.error(`Abort upload!! ${manifest.json.desktop.js[i2]}：${msg('Upload_NotPermittedFormat')}`);
+				return false;
             }
 
         }
@@ -131,7 +132,8 @@ function upload(page, lang) {
         console.log(`\nTrying to mobile js upload..`);
         const mobilejs = yield jsCssItem[1].$('.plupload > input[type="file"]');
         if (mobilejs == null) {
-            throw new Error('input[type="file"] cannot find');
+			console.log(chalk_1.default.red('input[type="file"] cannot find'));
+            process.exit(1);
         }
 
         for (var i4 = 0, len = manifest.json.mobile.js.length; i4 < len; i4++) {
@@ -139,13 +141,14 @@ function upload(page, lang) {
             if (manifest.fileCheck(`${manifest.path}/${manifest.json.mobile.js[i4]}`)) {
                 yield mobilejs.uploadFile(`${manifest.path}/${manifest.json.mobile.js[i4]}`);
             } else {
-                console.warn(`SKIP=>[${manifest.json.mobile.js[i4]}] does not exist.`);
-                continue;
+                console.error(`Abort upload!! ${manifest.json.mobile.js[i4]} does not exist.`);
+                return false;
             }
 
             yield sleep(100);
             if (yield page.$("#jsFiles_MOBILE-container + .input-error-cybozu")) {
-                console.warn(`SKIP=>[${manifest.json.mobile.js[i4]}]：${msg('Upload_NotPermittedFormat')}`);
+                console.warn(`Abort upload!! ${manifest.json.mobile.js[i4]}：${msg('Upload_NotPermittedFormat')}`);
+				return false;
             }
         }
 
@@ -153,7 +156,8 @@ function upload(page, lang) {
         console.log(`\nTrying to desktop css upload..`);
         const desktopCss = yield jsCssItem[2].$('.plupload > input[type="file"]');
         if (desktopCss == null) {
-            throw new Error('input[type="file"] cannot find');
+			console.log(chalk_1.default.red('input[type="file"] cannot find'));
+            process.exit(1);
         }
 
         for (var i1 = 0, len = manifest.json.desktop.css.length; i1 < len; i1++) {
@@ -161,29 +165,30 @@ function upload(page, lang) {
             if (manifest.fileCheck(`${manifest.path}/${manifest.json.desktop.css[i1]}`)) {
                 yield desktopCss.uploadFile(`${manifest.path}/${manifest.json.desktop.css[i1]}`);
             } else {
-                console.warn(`SKIP=>[${manifest.json.desktop.css[i1]}] does not exist.`);
-                continue;
+                console.warn(`Abort upload!! ${manifest.json.desktop.css[i1]} does not exist.`);
+                return false;
             }
 
             yield sleep(100);
             if (yield page.$("#jsFiles_DESKTOP_CSS-container + .input-error-cybozu")) {
-                console.warn(`SKIP=>[${manifest.json.desktop.css[i1]}]：${msg('Upload_NotPermittedFormat')}`);
+                console.warn(`Abort upload!! ${manifest.json.desktop.css[i1]}：${msg('Upload_NotPermittedFormat')}`);
+				return false;
             }
         }
 
-        /* ボタンクリック */
-        yield page.click('.button-submit-cybozu');
         try{
+			/* ボタンクリック */
+			yield page.click('.button-submit-cybozu');
             yield page.waitForSelector(".notifier-success-cybozu", {
                 visible: true,
                 timeout: TIMEOUT_MS
             });
         }catch(e){
-            console.error(`file uploaded error. e:${e}`);
-            return;
+			throw new Error(`file uploaded error. e:${e}`);
         }
 
         console.log(`\n${msg("Uploaded")}`);
+		return true;
 
     });
 }

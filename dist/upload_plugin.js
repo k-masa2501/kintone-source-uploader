@@ -19,7 +19,7 @@ const chalk_1 = __importDefault(require("chalk"));
 const fs_1 = __importDefault(require("fs"));
 const puppeteer_1 = __importDefault(require("puppeteer"));
 const messages_1 = require("./messages");
-const TIMEOUT_MS = 50000;
+const TIMEOUT_MS = 30000;
 var proxyUserId = null;
 var proxyPasswd = null;
 
@@ -106,10 +106,12 @@ function upload(page, pluginPath, lang) {
         }
         yield file.uploadFile(pluginPath);
         yield page.click('button[name="ok"]');
-        yield page.waitForSelector(".ocean-ui-dialog", {
-            hidden: true,
-            timeout: TIMEOUT_MS
-        });
+		if (yield page.click(".ocean-ui-dialog")){
+			yield page.waitForSelector(".ocean-ui-dialog", {
+				hidden: true,
+				timeout: TIMEOUT_MS
+			});
+		}
         console.log(`${pluginPath} ${m("Uploaded")}`);
     });
 }

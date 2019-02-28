@@ -49,7 +49,9 @@ const controller = function(domain, username, password, manifestFile, options) {
 };
 
 controller.prototype = {
-
+	getMutex: function(){
+		return mutex;
+	},
     fsWatch: function(){
         var startTime = null;
         fs.watch(manifest.path, { persistent: true, recursive: true }, (eventType, targetFilePath) => {
