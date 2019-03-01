@@ -39,14 +39,15 @@ function analysisProxyStr(proxy) {
 
 function launchBrowser(proxy) {
     return __awaiter(this, void 0, void 0, function* () {
-        var args = null;
+        var args = [
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+        ];
         if (proxy) {
             var _proxy = analysisProxyStr(proxy);
             proxyUserId = _proxy[3];
             proxyPasswd = _proxy[4];
-            args = [`--proxy-server=${_proxy[5]}:${_proxy[7]}`];
-        } else {
-            args = [];
+            args.push(`--proxy-server=${_proxy[5]}:${_proxy[7]}`);
         }
         return yield puppeteer_1.default.launch({ args });
     });
