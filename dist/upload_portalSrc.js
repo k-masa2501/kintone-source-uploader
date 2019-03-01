@@ -409,6 +409,8 @@ String.prototype.pathReplace = function () {
     switch (os.platform()) {
         case 'win32':
             return this.replace(/\\/g, "/");
+        default:
+            return this.toString();
     }
 }
 

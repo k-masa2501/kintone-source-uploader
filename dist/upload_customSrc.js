@@ -25,7 +25,7 @@ String.prototype.pathReplace = function(){
         case 'win32' :
             return this.replace(/\\/g, "/");
         default:
-            return this;
+            return this.toString();
     }
 }
 
