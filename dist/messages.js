@@ -122,8 +122,8 @@ const messages = {
         ja: "マニフェストファイルの解析に失敗したため、ソースアップロード処理を中断します。"
     },
     get_kintoneStatusError: {
-        en: "Failed to get kintone processing state. Retry after 3 seconds.",
-        ja: "kintone処理状態の取得に失敗しました。3秒後にリトライします。"
+        en: "Failed to get kintone processing state. interrupt the upload process.",
+        ja: "kintone処理状態の取得に失敗しました。アップロード処理を中断します。"
     },
     targetfile_NotRead: {
         en: "Can not read the source code, interrupt the upload process.",

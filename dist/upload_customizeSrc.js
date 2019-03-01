@@ -147,17 +147,11 @@ controller.prototype = {
                         }
                     }
                 } else {
-                    if (0 < timeout) {
                         var errMsg = `error: ${util.inspect(error, { depth: null })}\n`;
                         errMsg += `body: ${util.inspect(body, { depth: null })}\n`;
-                        errMsg += `${msg('get_kintoneStatusError')} retry:${timeout}`;
-                        logger.warn(errMsg);
-                        setTimeout( () => { this.execRun(--timeout); }, RETRY_TIMEOUT_MSEC);
-                    } else {
-                        // リトライタイムアウト。リトライ処理を終了します。
-                        logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
-                        return;
-                    }
+                        errMsg += msg('get_kintoneStatusError');
+                        logger.error(errMsg);
+						return;
                 }
             });
         } catch (error) {
@@ -402,7 +396,7 @@ controller.prototype = {
             logger.error(error);
         }
     },
-    deleteJsonKey: function(jsonData) { //
+    deleteJsonKey: function(jsonData) {
         delete jsonData.guest_space_id;
         delete jsonData.revision;
         for (var i = 0, len = jsonData.desktop.js.length; i < len; i++) {
