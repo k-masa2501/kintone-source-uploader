@@ -13,7 +13,8 @@ test:
     expire_in: 2 week
     when: always
     paths:
-      - test_report/
+      - coverage/
+      - test-results.html
   tags:
     - docker
 
