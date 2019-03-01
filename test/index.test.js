@@ -47,7 +47,7 @@
                     customSrc,
                     portalSrc,
                 },
-                "test\\test_data\\jsEdit_plugin_v4.1.zip",
+                "test/test_data/jsEdit_plugin_v4.1.zip",
                 function(){console.log("show help!!");}
             );
             await sleep(25000);
@@ -56,7 +56,7 @@
 
         it('upload customize source code.', async function () {
             sinon.stub(process, 'exit');
-            customSrc = "test\\test_data\\custom.manifest.success.json";
+            customSrc = "test/test_data/custom.manifest.success.json";
             run(
                 {
                     username,
@@ -79,7 +79,7 @@
 
         it('upload portal source code.', async function () {
             sinon.stub(process, 'exit');
-            portalSrc = "test\\test_data\\portal.manifest.success.json";
+            portalSrc = "test/test_data/portal.manifest.success.json";
             run(
                 {
                     username,

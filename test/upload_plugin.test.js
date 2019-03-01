@@ -32,7 +32,7 @@
 				process.env.KINTONE_DOMAIN,
 				process.env.KINTONE_USERNAME,
 				process.env.KINTONE_PASSWORD,
-				"test\\test_data\\jsEdit_plugin_v4.1.zip",
+				"test/test_data/jsEdit_plugin_v4.1.zip",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			); 
         });
@@ -44,7 +44,7 @@
 				"",
 				process.env.KINTONE_USERNAME,
 				process.env.KINTONE_PASSWORD,
-				"test\\test_data\\jsEdit_plugin_v4.1.zip",
+				"test/test_data/jsEdit_plugin_v4.1.zip",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			); 
 

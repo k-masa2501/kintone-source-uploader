@@ -31,7 +31,7 @@
 				process.env.KINTONE_DOMAIN,
 				process.env.KINTONE_USERNAME,
 				process.env.KINTONE_PASSWORD,
-				"test\\test_data\\portal.manifest.success.json",
+				"test/test_data/portal.manifest.success.json",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			); 
         });
@@ -43,7 +43,7 @@
                 "",
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.success.json",
+                "test/test_data/portal.manifest.success.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });
@@ -55,7 +55,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.error.djs.notfound.json",
+                "test/test_data/portal.manifest.error.djs.notfound.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             ); 
         });
@@ -67,7 +67,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.error.djs.error.json",
+                "test/test_data/portal.manifest.error.djs.error.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });
@@ -79,7 +79,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.error.mjs.notfound.json",
+                "test/test_data/portal.manifest.error.mjs.notfound.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });
@@ -91,7 +91,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.error.mjs.error.json",
+                "test/test_data/portal.manifest.error.mjs.error.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });
@@ -103,7 +103,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.error.dcss.notfound.json",
+                "test/test_data/portal.manifest.error.dcss.notfound.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });
@@ -115,7 +115,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.error.dcss.error.json",
+                "test/test_data/portal.manifest.error.dcss.error.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });
@@ -127,7 +127,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.fomat.error.1.json",
+                "test/test_data/portal.manifest.fomat.error.1.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });
@@ -139,7 +139,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\portal.manifest.fomat.error.2.json",
+                "test/test_data/portal.manifest.fomat.error.2.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });
@@ -151,7 +151,7 @@
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\example.json",
+                "test/test_data/example.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
         });

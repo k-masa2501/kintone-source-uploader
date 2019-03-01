@@ -31,7 +31,7 @@
 				process.env.KINTONE_DOMAIN, 
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
-				"test\\test_data\\custom.manifest.success.json",
+				"test/test_data/custom.manifest.success.json",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 
@@ -45,7 +45,7 @@
 				process.env.KINTONE_DOMAIN, 
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
-				"test\\test_data\\custom.manifest.success.json",
+				"test/test_data/custom.manifest.success.json",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 			const mutex = instance.getMutex();
@@ -106,7 +106,7 @@
 				process.env.KINTONE_DOMAIN, 
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
-				"test\\test_data\\custom.manifest.error.1.json",
+				"test/test_data/custom.manifest.error.1.json",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 			const mutex = instance.getMutex();
@@ -298,7 +298,7 @@
 				process.env.KINTONE_DOMAIN, 
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
-				"test\\test_data\\custom.manifest.gest.success.json",
+				"test/test_data/custom.manifest.gest.success.json",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 
@@ -313,7 +313,7 @@
 				process.env.KINTONE_DOMAIN, 
 				process.env.KINTONE_USERNAME, 
 				"aaaa",
-				"test\\test_data\\custom.manifest.success.json",
+				"test/test_data/custom.manifest.success.json",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 
@@ -328,7 +328,7 @@
 				"sample", 
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
-				"test\\test_data\\custom.manifest.success.json",
+				"test/test_data/custom.manifest.success.json",
 				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 
@@ -344,7 +344,7 @@
                 "sample",
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\custom.manifest.error.formaterror.1.json",
+                "test/test_data/custom.manifest.error.formaterror.1.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
 
@@ -361,7 +361,7 @@
                 "sample",
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\custom.manifest.error.formaterror.2.json",
+                "test/test_data/custom.manifest.error.formaterror.2.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
 
@@ -378,7 +378,7 @@
                 "sample",
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test\\test_data\\exapmle.json",
+                "test/test_data/exapmle.json",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
 
