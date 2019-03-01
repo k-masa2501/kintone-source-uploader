@@ -171,27 +171,27 @@
         });
 
         it('checkIfNeedToUpload match manifest file.', function () {
-            const result = instance.checkIfNeedToUpload("custom.manifest.success.json");
+            var result = instance.checkIfNeedToUpload("custom.manifest.success.json");
             chai.assert.equal(result, true);
         });
 
         it('checkIfNeedToUpload match desktop js.', function () {
-            const result = instance.checkIfNeedToUpload("js/desktop/desktop1.js");
+            var result = instance.checkIfNeedToUpload("js/desktop/desktop1.js");
             chai.assert.equal(result, true);
         });
 
         it('checkIfNeedToUpload match desktop css.', function () {
-            const result = instance.checkIfNeedToUpload("css/desktop1.css");
+            var result = instance.checkIfNeedToUpload("css/desktop1.css");
             chai.assert.equal(result, true);
         });
 
         it('checkIfNeedToUpload match mobile js.', function () {
-            const result = instance.checkIfNeedToUpload("js/mobile/mobile1.js");
+            var result = instance.checkIfNeedToUpload("js/mobile/mobile1.js");
             chai.assert.equal(result, true);
         });
 
         it('checkIfNeedToUpload does not match.', function () {
-            const result = instance.checkIfNeedToUpload("example_src.js");
+            var result = instance.checkIfNeedToUpload("example_src.js");
             console.log("-------------------");
             console.log(result);
             console.log("-------------------");

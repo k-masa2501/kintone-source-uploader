@@ -79,6 +79,7 @@ controller.prototype = {
                 logger.warn(`${msg('Interrupt_ManifestJsonParse')}`);
                 return false;
             }else{
+                console.log("aaaaaaaaaaaaaaaaa");
                 return true;
             }
         }
@@ -88,6 +89,7 @@ controller.prototype = {
             for (var i = 0, len = jsonData.desktop.js.length; i < len; i++) {
                 if (jsonData.desktop.js[i].file &&
                     jsonData.desktop.js[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
+                    console.log("bbbbbbbbbbbbbbbbbb");
                     return true;
                 }
             }
@@ -95,6 +97,7 @@ controller.prototype = {
             for (var i = 0, len = jsonData.desktop.css.length; i < len; i++) {
                 if (jsonData.desktop.css[i].file &&
                     jsonData.desktop.css[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
+                    console.log("ccccccccccccccc");
                     return true;
                 }
             }
@@ -102,11 +105,12 @@ controller.prototype = {
             for (var i = 0, len = jsonData.mobile.js.length; i < len; i++) {
                 if (jsonData.mobile.js[i].file &&
                     jsonData.mobile.js[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
+                    console.log("eeeeeeeeeeeeeee");
                     return true;
                 }
             }
         }
-
+        console.log("fffffffffffffffffff");
         return false;
     },
     rapper_execRun: async function () {
