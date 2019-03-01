@@ -191,7 +191,8 @@
         });
 
         it('checkIfNeedToUpload does not match.', async function () {
-            const result = instance.checkIfNeedToUpload("js/mobile/example_src.js");
+            const result = instance.checkIfNeedToUpload("example_src.js");
+            console.log(result);
             chai.assert.equal(result, false);
         });
 
