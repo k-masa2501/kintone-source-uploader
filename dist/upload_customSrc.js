@@ -24,6 +24,8 @@ String.prototype.pathReplace = function(){
     switch(os.platform()){
         case 'win32' :
             return this.replace(/\\/g, "/");
+        default:
+            return this;
     }
 }
 
@@ -89,7 +91,8 @@ controller.prototype = {
             for (var i = 0, len = jsonData.desktop.js.length; i < len; i++) {
                 if (jsonData.desktop.js[i].file &&
                     jsonData.desktop.js[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
-                    console.log("bbbbbbbbbbbbbbbbbb");
+                    console.log(jsonData.desktop.js[i].file.name.pathReplace());
+                    console.log(targetFilePath.pathReplace());
                     return true;
                 }
             }

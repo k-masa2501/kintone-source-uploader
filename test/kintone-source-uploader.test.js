@@ -170,6 +170,14 @@
             mutex.release();
         });
 
+        it('execRun timeout', async function () {
+            const mutex = instance.getMutex();
+            mutex.release = await mutex.obj.acquire();
+            instance.execRun(-1);
+            mutex.release = await mutex.obj.acquire();
+            mutex.release();
+        });
+
         it('checkIfNeedToUpload match manifest file.', function () {
             var result = instance.checkIfNeedToUpload("custom.manifest.success.json");
             chai.assert.equal(result, true);
@@ -196,14 +204,6 @@
             console.log(result);
             console.log("-------------------");
             chai.assert.equal(result, false);
-        });
-
-        it('execRun timeout', async function () {
-            const mutex = instance.getMutex();
-            mutex.release = await mutex.obj.acquire();
-            instance.execRun(-1);
-            mutex.release = await mutex.obj.acquire();
-            mutex.release();
         });
 
         it('execRun status get faild.', async function () {
