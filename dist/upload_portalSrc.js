@@ -220,7 +220,7 @@ function run(domain, userName, password, manifestFile, options) {
                         return;
                     }
                     // 検知したファイルとマニフェストの内容を検証
-                    if (checkIfNeedToUpload(targetFilePath)) {
+                    if (checkNeedToSourceUpload(targetFilePath)) {
                         try {
                             uploading = true;
                             yield upload(page, lang);
@@ -251,7 +251,7 @@ function run(domain, userName, password, manifestFile, options) {
     });
 }
 
-const checkIfNeedToUpload = (targetFilePath) => {
+const checkNeedToSourceUpload = (targetFilePath) => {
 
     if (manifest.fileName === targetFilePath) {
         if (!manifest.reload()) {

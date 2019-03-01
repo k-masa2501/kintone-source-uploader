@@ -1,7 +1,7 @@
 (function () {
 
     const { run } = require("../dist/index.js");
-    const { srcUpload_run } = require("../dist/upload_customSrc");
+    const { customizeUpload_run } = require("../dist/upload_customizeSrc");
     const { pluginUpload_run } = require("../dist/upload_plugin.js");
     const { portalUpload_run } = require("../dist/upload_portalSrc.js");
     const sinon = require('sinon');
@@ -144,7 +144,7 @@
 
         it('upload success.', async function () {
 
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
@@ -158,7 +158,7 @@
         });
 
         it('upload wait 3 second.', async function () {
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
@@ -178,36 +178,33 @@
             mutex.release();
         });
 
-        it('checkIfNeedToUpload match manifest file.', function () {
-            var result = instance.checkIfNeedToUpload("custom.manifest.success.json");
+        it('checkNeedToSourceUpload match manifest file.', function () {
+            var result = instance.checkNeedToSourceUpload("custom.manifest.success.json");
             chai.assert.equal(result, true);
         });
 
-        it('checkIfNeedToUpload match desktop js.', function () {
-            var result = instance.checkIfNeedToUpload("js/desktop/desktop1.js");
+        it('checkNeedToSourceUpload match desktop js.', function () {
+            var result = instance.checkNeedToSourceUpload("js/desktop/desktop1.js");
             chai.assert.equal(result, true);
         });
 
-        it('checkIfNeedToUpload match desktop css.', function () {
-            var result = instance.checkIfNeedToUpload("css/desktop1.css");
+        it('checkNeedToSourceUpload match desktop css.', function () {
+            var result = instance.checkNeedToSourceUpload("css/desktop1.css");
             chai.assert.equal(result, true);
         });
 
-        it('checkIfNeedToUpload match mobile js.', function () {
-            var result = instance.checkIfNeedToUpload("js/mobile/mobile1.js");
+        it('checkNeedToSourceUpload match mobile js.', function () {
+            var result = instance.checkNeedToSourceUpload("js/mobile/mobile1.js");
             chai.assert.equal(result, true);
         });
 
-        it('checkIfNeedToUpload does not match.', function () {
-            var result = instance.checkIfNeedToUpload("example_src.js");
-            console.log("-------------------");
-            console.log(result);
-            console.log("-------------------");
+        it('checkNeedToSourceUpload does not match.', function () {
+            var result = instance.checkNeedToSourceUpload("example_src.js");
             chai.assert.equal(result, false);
         });
 
         it('execRun status get faild.', async function () {
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
@@ -399,7 +396,7 @@
 
         it('Successful test of subject guest space apl.', async function () {
 
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
@@ -414,7 +411,7 @@
 
         it('Authentication error.', async function () {
 
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 "aaaa",
@@ -429,7 +426,7 @@
 
         it('Invalid URI.', async function () {
 
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
@@ -444,7 +441,7 @@
 
         it('No1 Invalid manifest json format.', async function () {
 
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
@@ -459,7 +456,7 @@
 
         it('No2 Invalid manifest json format.', async function () {
 
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
@@ -474,7 +471,7 @@
 
         it('Manifest file does not exist.', async function () {
 
-            instance = srcUpload_run(
+            instance = customizeUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,

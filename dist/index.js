@@ -5,7 +5,7 @@
 "use strict";
 
 const { inquireParams } = require("../dist/params");
-const { srcUpload_run } = require("../dist/upload_customSrc");
+const { customizeUpload_run } = require("../dist/upload_customizeSrc");
 const { portalUpload_run } = require("../dist/upload_portalSrc");
 const { pluginUpload_run } = require("../dist/upload_plugin");
 const { getMessage } = require("../dist/messages");
@@ -20,7 +20,7 @@ function run({username, password, domain, proxy, watch, waitingDialogMs, lang, c
         .then(() => inquireParams({ username, password, domain, lang }))
         .then(({ username, password, domain }) => {
             if (customSrc){
-                return srcUpload_run(domain, username, password, customSrc, options);
+                return customizeUpload_run(domain, username, password, customSrc, options);
             } else if (portalSrc){
                 return portalUpload_run(domain, username, password, portalSrc, options);
             } else if (pluginPath){

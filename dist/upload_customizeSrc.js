@@ -46,7 +46,7 @@ const controller = function(domain, username, password, manifestFile, options) {
 
     // ファイル変更監視
     if (options.watch){
-        this.fsWatch();
+        this.watch();
     }
 };
 
@@ -54,7 +54,7 @@ controller.prototype = {
 	getMutex: function(){
 		return mutex;
 	},
-    fsWatch: function(){
+    watch: function(){
         var startTime = null;
         fs.watch(manifest.path, { persistent: true, recursive: true }, (eventType, targetFilePath) => {
             // 前回からの処理時間が100ミリ未満の場合、同一ファイルの変更とみなして処理しない。
@@ -64,7 +64,7 @@ controller.prototype = {
                         if (result) {
                             this.rapper_execRun();
                         }
-                    })(this.checkIfNeedToUpload(targetFilePath));
+                    })(this.checkNeedToSourceUpload(targetFilePath));
                 }
             }
             
@@ -72,16 +72,12 @@ controller.prototype = {
             startTime = Date.now();
         });
     },
-    checkIfNeedToUpload: function(targetFilePath) {
-        console.log(targetFilePath);
-        console.log(manifest.fileName);
-        console.log(util.inspect(manifest.json, { depth: null }));
+    checkNeedToSourceUpload: function(targetFilePath) {
         if (manifest.fileName === targetFilePath){
             if (!manifest.reload()){
                 logger.warn(`${msg('Interrupt_ManifestJsonParse')}`);
                 return false;
             }else{
-                console.log("aaaaaaaaaaaaaaaaa");
                 return true;
             }
         }
@@ -91,8 +87,6 @@ controller.prototype = {
             for (var i = 0, len = jsonData.desktop.js.length; i < len; i++) {
                 if (jsonData.desktop.js[i].file &&
                     jsonData.desktop.js[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
-                    console.log(jsonData.desktop.js[i].file.name.pathReplace());
-                    console.log(targetFilePath.pathReplace());
                     return true;
                 }
             }
@@ -100,7 +94,6 @@ controller.prototype = {
             for (var i = 0, len = jsonData.desktop.css.length; i < len; i++) {
                 if (jsonData.desktop.css[i].file &&
                     jsonData.desktop.css[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
-                    console.log("ccccccccccccccc");
                     return true;
                 }
             }
@@ -108,12 +101,10 @@ controller.prototype = {
             for (var i = 0, len = jsonData.mobile.js.length; i < len; i++) {
                 if (jsonData.mobile.js[i].file &&
                     jsonData.mobile.js[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
-                    console.log("eeeeeeeeeeeeeee");
                     return true;
                 }
             }
         }
-        console.log("fffffffffffffffffff");
         return false;
     },
     rapper_execRun: async function () {
@@ -639,4 +630,4 @@ const run = (domain, username, password, manifestFile, options) => {
     return new controller(domain, username, password, manifestFile, options);
 };
 
-module.exports.srcUpload_run = run;
+module.exports.customizeUpload_run = run;
