@@ -192,7 +192,9 @@
 
         it('checkIfNeedToUpload does not match.', async function () {
             const result = instance.checkIfNeedToUpload("example_src.js");
+            console.log("-------------------");
             console.log(result);
+            console.log("-------------------");
             chai.assert.equal(result, false);
         });
 

@@ -71,6 +71,9 @@ controller.prototype = {
         });
     },
     checkIfNeedToUpload: function(targetFilePath) {
+        console.log(targetFilePath);
+        console.log(manifest.fileName);
+        console.log(manifest.json);
         if (manifest.fileName === targetFilePath){
             if (!manifest.reload()){
                 logger.warn(`${msg('Interrupt_ManifestJsonParse')}`);
