@@ -34,6 +34,7 @@ function analysisProxyStr(proxy){
 function launchBrowser(proxy) {
     return __awaiter(this, void 0, void 0, function* () {
         var args = [
+            '--disable-dev-shm-usage',
             '--no-sandbox',
             '--disable-setuid-sandbox'
         ];
