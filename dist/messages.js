@@ -63,7 +63,7 @@ const messages = {
     },
     Manifest_parseError: {
         en: "Could not parse the manifest file into Json format.",
-        ja: "マニフェストファイルをJson形式に整形することが出来ませんでした。"
+        ja: "マニフェストファイルをJsonフォーマットに整形することが出来ませんでした。"
     },
     Manifest_fileUploadError: {
         en: "File upload failed. it retries in 3 second.",
@@ -106,32 +106,32 @@ const messages = {
         ja: "アップロード対象ファイルの読み込みに失敗しました。"
     },
     kintoneStatus_processing: {
-        en: "Kintone is in the process of changing application settings, it retries upload process in 3 second.",
-        ja: "kintone側でアプリ設定の変更処理中のため、ソースアップロード処理を3秒後にリトライします。"
+        en: "Processing can not continue because kintone is in the process of changing setting. Retry the source upload process in 3 seconds.",
+        ja: "kintone側で設定の変更処理中であるため、処理を続行できません。ソースアップロード処理を3秒後にリトライします。"
     },
     load_AppSettingsError: {
-        en: "Failed to get JavaScript/CSS customization setting.  it retries in 3 second.",
-        ja: "JavaScript/CSSカスタマイズ設定の取得に失敗しました。3秒後にリトライします。"
+        en: "Could not get JavaScript / CSS customization setting. Retry after 3 seconds.",
+        ja: "JavaScript/CSSカスタマイズ設定を取得することが出来ませんでした。3秒後にリトライします。"
     },
     retry_Timeout: {
         en: "Retry timeout. The retry process is terminated.",
         ja: "リトライタイムアウト。リトライ処理を終了します。"
     },
     Interrupt_ManifestJsonParse: {
-        en: "Interrupt source upload processing because analysis of manifest file failed.",
-        ja: "マニフェストファイルの解析に失敗したため、ソースアップロード処理を中断します。"
+        en: "Failed to parse the manifest file. Abort the upload process.",
+        ja: "マニフェストファイルの解析に失敗しました。アップロード処理を中断します。"
     },
     get_kintoneStatusError: {
-        en: "Failed to get kintone processing state. interrupt the upload process.",
-        ja: "kintone処理状態の取得に失敗しました。アップロード処理を中断します。"
+        en: "Could not get processing status of kintone. Abort the upload process.",
+        ja: "kintoneの処理状態を取得することが出来ませんでした。アップロード処理を中断します。"
     },
     targetfile_NotRead: {
-        en: "Can not read the source code, interrupt the upload process.",
-        ja: "対象ソースコードが読めないため、アップロード処理を中断します。"
+        en: "Failed to import source code. Abort the upload process.",
+        ja: "ソースコードのインポートに失敗しました。アップロード処理を中断します。"
     },
     Upload_NotPermittedFormat:{
         en: "It is a file of a format not permitted to upload.",
-        ja: "アップロードが許可されていない形式のファイルです。"
+        ja: "アップロードが許可されていないファイル形式です。"
     }
 };
 /**
