@@ -171,43 +171,28 @@
         });
 
         it('checkIfNeedToUpload match manifest file.', async function () {
-            const mutex = instance.getMutex();
-            mutex.release = await mutex.obj.acquire();
             const result = instance.checkIfNeedToUpload("custom.manifest.success.json");
             chai.assert.equal(result, true);
-            mutex.release();
         });
 
         it('checkIfNeedToUpload match desktop js.', async function () {
-            const mutex = instance.getMutex();
-            mutex.release = await mutex.obj.acquire();
             const result = instance.checkIfNeedToUpload("js/desktop/desktop1.js");
             chai.assert.equal(result, true);
-            mutex.release();
         });
 
         it('checkIfNeedToUpload match desktop css.', async function () {
-            const mutex = instance.getMutex();
-            mutex.release = await mutex.obj.acquire();
             const result = instance.checkIfNeedToUpload("css/desktop1.css");
             chai.assert.equal(result, true);
-            mutex.release();
         });
 
         it('checkIfNeedToUpload match mobile js.', async function () {
-            const mutex = instance.getMutex();
-            mutex.release = await mutex.obj.acquire();
             const result = instance.checkIfNeedToUpload("js/mobile/mobile1.js");
             chai.assert.equal(result, true);
-            mutex.release();
         });
 
         it('checkIfNeedToUpload does not match.', async function () {
-            const mutex = instance.getMutex();
-            mutex.release = await mutex.obj.acquire();
-            const result = instance.checkIfNeedToUpload("js/mobile/example.js");
+            const result = instance.checkIfNeedToUpload("js/mobile/example_src.js");
             chai.assert.equal(result, false);
-            mutex.release();
         });
 
         it('execRun timeout', async function () {
