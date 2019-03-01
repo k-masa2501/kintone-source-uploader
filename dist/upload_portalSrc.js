@@ -217,10 +217,8 @@ function run(domain, userName, password, manifestFile, options) {
                     if (uploading) {
                         return;
                     }
-                  
                     // 検知したファイルとマニフェストの内容を検証
                     if (checkIfNeedToUpload(targetFilePath)) {
-
                         try {
                             uploading = true;
                             yield upload(page, lang);
@@ -326,7 +324,9 @@ const manifest = {
         }
 
         // マニフェストフォーマット検査
-        manifest.validate(json);
+        if (!manifest.validate(json)){
+            return null;
+        }
 
         // マニフェストをメモリに格納
         manifest.json = json;
@@ -340,8 +340,10 @@ const manifest = {
     validate: (source) => {
         const result = new Validator().validate(source, manifest.schema);
         if (result.errors.length > 0) {
-            throw new Error(`${msg('Manifest_FormatError')} [${result.errors[0].message}]`);
+            console.error(`${msg('Manifest_FormatError')} [${result.errors[0].message}]`);
+            return false;
         }
+        return true;
     },
     json: null,
     path: null,

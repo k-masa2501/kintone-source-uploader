@@ -20,11 +20,13 @@ function run({username, password, domain, proxy, watch, waitingDialogMs, lang, c
         .then(() => inquireParams({ username, password, domain, lang }))
         .then(({ username, password, domain }) => {
             if (customSrc){
-                srcUpload_run(domain, username, password, customSrc, options);
+                return srcUpload_run(domain, username, password, customSrc, options);
             } else if (portalSrc){
-                portalUpload_run(domain, username, password, portalSrc, options);
-            } else{
-                pluginUpload_run(domain, username, password, pluginPath, options);                
+                return portalUpload_run(domain, username, password, portalSrc, options);
+            } else if (pluginPath){
+                return pluginUpload_run(domain, username, password, pluginPath, options);                
+            }else{
+                showhelp();
             }
         });
 }

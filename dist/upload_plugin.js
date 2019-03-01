@@ -132,7 +132,6 @@ function run(domain, userName, password, pluginPath, options) {
         try {
             page = yield readyForUpload(browser, domain, userName, password, lang);
             yield upload(page, pluginPath, lang);
-			yield browser.close();
             if (options.watch) {
                 let uploading = false;
                 fs_1.default.watch(pluginPath, () => __awaiter(this, void 0, void 0, function* () {
@@ -141,10 +140,7 @@ function run(domain, userName, password, pluginPath, options) {
                     }
                     try {
                         uploading = true;
-                        browser = yield launchBrowser(options.proxyServer);
-                        page = yield readyForUpload(browser, domain, userName, password, lang);
                         yield upload(page, pluginPath, lang);
-						yield browser.close();
                     }
                     catch (e) {
                         console.log(e);
@@ -153,7 +149,6 @@ function run(domain, userName, password, pluginPath, options) {
                         browser = yield launchBrowser(options.proxyServer);
                         page = yield readyForUpload(browser, domain, userName, password, lang);
                         yield upload(page, pluginPath, lang);
-						yield browser.close();
                     }
                     finally {
                         uploading = false;

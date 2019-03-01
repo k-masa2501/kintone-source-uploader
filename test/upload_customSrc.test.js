@@ -1,6 +1,7 @@
 (function() {
 
     const { srcUpload_run } = require("../dist/upload_customSrc");
+    const sinon = require('sinon');
 	const path = require('path');
 	const chai = require('chai');
 
@@ -31,7 +32,7 @@
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
 				"test\\test_data\\custom.manifest.success.json",
-				{lang: "ja", proxyServer: null}
+				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 
 			const mutex = instance.getMutex();
@@ -45,7 +46,7 @@
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
 				"test\\test_data\\custom.manifest.success.json",
-				{lang: "ja", proxyServer: null}
+				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 			const mutex = instance.getMutex();
 			mutex.release = await mutex.obj.acquire();
@@ -106,7 +107,7 @@
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
 				"test\\test_data\\custom.manifest.error.1.json",
-				{lang: "ja", proxyServer: null}
+				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 			const mutex = instance.getMutex();
 			mutex.release = await mutex.obj.acquire();
@@ -298,7 +299,7 @@
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
 				"test\\test_data\\custom.manifest.gest.success.json",
-				{lang: "ja", proxyServer: null}
+				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 
 			const mutex = instance.getMutex();
@@ -313,7 +314,7 @@
 				process.env.KINTONE_USERNAME, 
 				"aaaa",
 				"test\\test_data\\custom.manifest.success.json",
-				{lang: "ja", proxyServer: null}
+				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 
 			const mutex = instance.getMutex();
@@ -328,7 +329,7 @@
 				process.env.KINTONE_USERNAME, 
 				process.env.KINTONE_PASSWORD,
 				"test\\test_data\\custom.manifest.success.json",
-				{lang: "ja", proxyServer: null}
+				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			);
 
 			const mutex = instance.getMutex();
@@ -336,10 +337,62 @@
 			mutex.release();
         });
 
-        afterEach(function() {});
+        it('No1 Invalid manifest json format.', async function () {
+
+            sinon.stub(process, 'exit');
+            instance = srcUpload_run(
+                "sample",
+                process.env.KINTONE_USERNAME,
+                process.env.KINTONE_PASSWORD,
+                "test\\test_data\\custom.manifest.error.formaterror.1.json",
+                { lang: "ja", proxyServer: process.env.HTTP_PROXY }
+            );
+
+            const mutex = instance.getMutex();
+            mutex.release = await mutex.obj.acquire();
+            mutex.release();
+            process.exit.restore();
+        });
+
+        it('No2 Invalid manifest json format.', async function () {
+
+            sinon.stub(process, 'exit');
+            instance = srcUpload_run(
+                "sample",
+                process.env.KINTONE_USERNAME,
+                process.env.KINTONE_PASSWORD,
+                "test\\test_data\\custom.manifest.error.formaterror.2.json",
+                { lang: "ja", proxyServer: process.env.HTTP_PROXY }
+            );
+
+            const mutex = instance.getMutex();
+            mutex.release = await mutex.obj.acquire();
+            mutex.release();
+            process.exit.restore();
+        });
+
+        it('Manifest file does not exist.', async function () {
+
+            sinon.stub(process, 'exit');
+            instance = srcUpload_run(
+                "sample",
+                process.env.KINTONE_USERNAME,
+                process.env.KINTONE_PASSWORD,
+                "test\\test_data\\exapmle.json",
+                { lang: "ja", proxyServer: process.env.HTTP_PROXY }
+            );
+
+            const mutex = instance.getMutex();
+            mutex.release = await mutex.obj.acquire();
+            mutex.release();
+            process.exit.restore();
+        });
+
+        afterEach(function() {
+        });
 
         after(function() {});
 
     });
 
-});
+})();

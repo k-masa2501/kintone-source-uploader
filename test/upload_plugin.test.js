@@ -33,38 +33,20 @@
 				process.env.KINTONE_USERNAME,
 				process.env.KINTONE_PASSWORD,
 				"test\\test_data\\jsEdit_plugin_v4.1.zip",
-				{lang: "ja", proxyServer: null}
+				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			); 
-
-        });
-
-		it('Authentication error.', async function() {
-			
-			sinon.stub(process, 'exit');
-            pluginUpload_run(
-				process.env.KINTONE_DOMAIN,
-				process.env.KINTONE_USERNAME,
-				"",
-				"test\\test_data\\jsEdit_plugin_v4.1.zip",
-				{lang: "ja", proxyServer: null}
-			); 
-
-			await sleep(35000);
-
         });
 
         it('Invalid URI.', async function() {
 			
 			sinon.stub(process, 'exit');
-            pluginUpload_run(
+            await pluginUpload_run(
 				"",
 				process.env.KINTONE_USERNAME,
 				process.env.KINTONE_PASSWORD,
 				"test\\test_data\\jsEdit_plugin_v4.1.zip",
-				{lang: "ja", proxyServer: null}
+				{lang: "ja", proxyServer: process.env.HTTP_PROXY}
 			); 
-
-			await sleep(35000);
 
         });
 

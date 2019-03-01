@@ -511,7 +511,9 @@ const manifest = {
         }
 
         // マニフェストフォーマット検査
-        manifest.validate(json);
+        if (!manifest.validate(json)){
+            return null;
+        }
 
         // マニフェストをメモリに格納
         manifest.json = json;
@@ -526,8 +528,9 @@ const manifest = {
         const result = new Validator().validate(source, manifest.schema);
         if (result.errors.length > 0) {
             logger.error(`${msg('Manifest_FormatError')} [${result.errors[0].message}]`);
-            process.exit(1);
+            return false;
         }
+        return true;
     },
     json: null,
     path: null,
