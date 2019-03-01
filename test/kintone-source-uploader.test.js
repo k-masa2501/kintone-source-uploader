@@ -170,27 +170,27 @@
             mutex.release();
         });
 
-        it('checkIfNeedToUpload match manifest file.', async function () {
+        it('checkIfNeedToUpload match manifest file.', function () {
             const result = instance.checkIfNeedToUpload("custom.manifest.success.json");
             chai.assert.equal(result, true);
         });
 
-        it('checkIfNeedToUpload match desktop js.', async function () {
+        it('checkIfNeedToUpload match desktop js.', function () {
             const result = instance.checkIfNeedToUpload("js/desktop/desktop1.js");
             chai.assert.equal(result, true);
         });
 
-        it('checkIfNeedToUpload match desktop css.', async function () {
+        it('checkIfNeedToUpload match desktop css.', function () {
             const result = instance.checkIfNeedToUpload("css/desktop1.css");
             chai.assert.equal(result, true);
         });
 
-        it('checkIfNeedToUpload match mobile js.', async function () {
+        it('checkIfNeedToUpload match mobile js.', function () {
             const result = instance.checkIfNeedToUpload("js/mobile/mobile1.js");
             chai.assert.equal(result, true);
         });
 
-        it('checkIfNeedToUpload does not match.', async function () {
+        it('checkIfNeedToUpload does not match.', function () {
             const result = instance.checkIfNeedToUpload("example_src.js");
             console.log("-------------------");
             console.log(result);

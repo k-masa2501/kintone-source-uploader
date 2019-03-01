@@ -73,7 +73,7 @@ controller.prototype = {
     checkIfNeedToUpload: function(targetFilePath) {
         console.log(targetFilePath);
         console.log(manifest.fileName);
-        console.log(manifest.json);
+        console.log(util.inspect(manifest.json, { depth: null }));
         if (manifest.fileName === targetFilePath){
             if (!manifest.reload()){
                 logger.warn(`${msg('Interrupt_ManifestJsonParse')}`);
