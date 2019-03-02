@@ -1,10 +1,12 @@
 # kintone-source-uploader
+[![pipeline status](https://gitlab.com/k-masa2501/kintone-source-uploader/badges/develop/pipeline.svg)](https://gitlab.com/k-masa2501/kintone-source-uploader/commits/develop)
+[![coverage report](https://gitlab.com/k-masa2501/kintone-source-uploader/badges/develop/coverage.svg)](https://gitlab.com/k-masa2501/kintone-source-uploader/commits/develop)  
 ## 概要
 kintoneの以下のソースコードをアップロードすることが可能です。  
-**アップロードによって既存の設定は上書きされます。**  
 - kintoneプラグイン  
 - kintoneアプリカスタマイズ用ソースコード  
 - kintoneポータルカスタマイズ用ソースコード  
+**アップロードによって既存の設定は上書きされます。**  
 
 ## 使い方
 ### インストール方法
@@ -38,8 +40,8 @@ or
 |--proxy  |任意  |プロキシ―アドレスを指定します。デフォルトはproxyを設定しません。  |
 |--watch  |任意  |変更を監視して再実行します。値は設定しません。デフォルトは--watch指定しません。  |
 |--lang  |任意  |en or jaを指定します。デフォルトは利用者が普段利用している言語です。  |
-|--customSrc  |任意  |マニフェストファイルを指定します。デフォルトは動作しません。  |
-|--portalSrc  |任意  |マニフェストファイルを指定します。デフォルトは動作しません。  |
+|--customSrc  |任意  |マニフェストファイルを相対パスで指定します。デフォルトは動作しません。  |
+|--portalSrc  |任意  |マニフェストファイルを相対パスで指定します。デフォルトは動作しません。  |
   
 --customSrcと--portalSrcは同時に指定できません。優先順位は「customSrc ＞ portalSrc ＞ pluginZip」です。
 

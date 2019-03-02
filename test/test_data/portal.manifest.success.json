@@ -1,0 +1,18 @@
+{
+    "desktop": {
+        "js": [
+            "js/desktop/desktop1.js",
+			"js/desktop/desktop2.js"
+        ],
+        "css": [
+			"css/desktop1.css",
+			"css/desktop2.css"
+        ]
+    },
+    "mobile": {
+        "js": [
+            "js/mobile/mobile1.js",
+			"js/mobile/mobile2.js"
+        ] 
+    }
+}

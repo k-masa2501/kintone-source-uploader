@@ -1,0 +1,6 @@
+node_modules/
+.vs/
+coverage/
+.nyc_output/
+package-lock.json
+test-results.html

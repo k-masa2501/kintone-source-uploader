@@ -1,0 +1,63 @@
+{
+    "app": 6,
+    "guest_space_id": 1,
+    "scope": "ALL",
+    "desktop": {
+        "js": [
+            {
+                "type": "URL",
+                "url": "https://js.cybozu.com/datatables/v1.10.19/js/jquery.dataTables.min.js" 
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "js/desktop/desktop1.js"
+                }
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "js/desktop/desktop2.js"
+                }
+            }
+        ],
+        "css": [
+           {
+                "type": "URL",
+                "url": "https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "css/desktop1.css"
+                }
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "css/desktop2.css"
+                }
+            }
+        ]
+    },
+    "mobile": {
+        "js": [
+            {
+                "type": "URL",
+                "url": "https://js.cybozu.com/datatables/v1.10.19/js/jquery.dataTables.min.js" 
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "js/mobile/mobile1.js"
+                }
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "js/mobile/mobile2.js"
+                }
+            }
+        ] 
+    }
+}

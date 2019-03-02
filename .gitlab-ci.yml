@@ -1,0 +1,21 @@
+image: circleci/node:8-browsers
+
+cache:
+  paths:
+  - node_modules/
+
+test:
+  stage: test
+  script:
+    - npm install
+    - npm test
+  artifacts:
+    expire_in: 2 week
+    when: always
+    paths:
+      - coverage/
+      - test-results.html
+  tags:
+    - docker
+
+
