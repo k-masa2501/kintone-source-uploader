@@ -1,6 +1,6 @@
 {
     "name": "kintone-source-uploader",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "This npm package can upload kintone application customization source code, kintone portal customization source code and kintone plugin.",
     "main": "dist/src/index.js",
     "scripts": {
