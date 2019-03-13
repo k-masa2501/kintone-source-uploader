@@ -4,7 +4,7 @@
     "description": "This npm package can upload kintone application customization source code, kintone portal customization source code and kintone plugin.",
     "main": "dist/src/index.js",
     "scripts": {
-        "test": "nyc node_modules/.bin/mocha --reporter mocha-simple-html-reporter --reporter-options output=test-results.html --recursive test/*.test.js"
+        "test": "nyc node_modules/.bin/mocha --recursive test/*.test.js"
     },
     "author": "k-masa2501",
     "license": "MIT",
@@ -43,16 +43,15 @@
         "meow": "^5.0.0",
         "os": "^0.1.1",
         "os-locale": "^3.0.1",
-        "puppeteer": "^1.11.0",
+        "puppeteer": "^1.13.0",
         "request": "^2.88.0",
         "util": "^0.11.1"
     },
     "devDependencies": {
         "chai": "^4.2.0",
         "mocha": "^6.0.2",
-        "mocha-simple-html-reporter": "^1.1.0",
         "nyc": "^13.3.0",
         "path": "^0.12.7",
-        "sinon": "^7.2.5"
+        "sinon": "^7.2.7"
     }
 }

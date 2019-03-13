@@ -21,11 +21,11 @@ const {
 const cli = meow(
     `
   Usage
-      $ kintone-plugin-uploader [OPTION] <pluginPath>
+      $ source-uploader [OPTION] <pluginPath>
     OR
-      $ kintone-plugin-uploader [OPTION] --customSrc <manifestPath>
+      $ source-uploader [OPTION] --customSrc <manifestPath>
     OR
-      $ kintone-plugin-uploader [OPTION] --portalSrc <manifestPath>
+      $ source-uploader [OPTION] --portalSrc <manifestPath>
   Options
     --domain Domain of your kintone
     --username Login username
