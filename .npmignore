@@ -1,2 +1,6 @@
+.gitlab-ci.yml
+package-lock.json
 test/
+.nyc_output/
 .circleci/
+coverage/

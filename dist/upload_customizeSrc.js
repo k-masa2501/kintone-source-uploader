@@ -9,7 +9,6 @@ const fs = require('fs');
 const messages_1 = require("./messages");
 const request = require("request");
 const formData = require('form-data');
-const util = require("util");
 const btoa = require('btoa');
 const { Validator } = require('jsonschema');
 const { Mutex } = require('await-semaphore');
@@ -147,8 +146,8 @@ controller.prototype = {
                         }
                     }
                 } else {
-                        var errMsg = `error: ${util.inspect(error, { depth: null })}\n`;
-                        errMsg += `body: ${util.inspect(body, { depth: null })}\n`;
+                        var errMsg = `error: ${consoleJson(error)}\n`;
+                        errMsg += `body: ${consoleJson(body)}\n`;
                         errMsg += msg('get_kintoneStatusError');
                         logger.error(errMsg);
 						return;
@@ -179,9 +178,9 @@ controller.prototype = {
                             this.upload_DesktopJs(jsonData, ++elmCounter);
                         } else {
                             if (0 < timeout) {
-                                var errMsg = `errorNode: ${util.inspect(jsonData.desktop.js[elmCounter], { depth: null })}\n`;
-                                errMsg += `error: ${util.inspect(error, { depth: null })}\n`;
-                                errMsg += `body: ${util.inspect(body, { depth: null })}\n`;
+                                var errMsg = `errorNode: ${consoleJson(jsonData.desktop.js[elmCounter])}\n`;
+                                errMsg += `error: ${consoleJson(error)}\n`;
+                                errMsg += `body: ${consoleJson(body)}\n`;
                                 errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
                                 logger.warn(`${errMsg}`);
                                 setTimeout(() => { this.upload_DesktopJs(jsonData, elmCounter, --timeout); }, RETRY_TIMEOUT_MSEC);
@@ -229,9 +228,9 @@ controller.prototype = {
                             this.upload_DesktopCss(jsonData, ++elmCounter);
                         } else {
                             if (0 < timeout) {
-                                var errMsg = `error: ${util.inspect(error, { depth: null })}\n`;
-                                errMsg += `body: ${util.inspect(body, { depth: null })}\n`;
-                                errMsg += `errorNode: ${util.inspect(jsonData.desktop.js[elmCounter], { depth: null })}\n`;
+                                var errMsg = `error: ${consoleJson(error)}\n`;
+                                errMsg += `body: ${consoleJson(body)}\n`;
+                                errMsg += `errorNode: ${consoleJson(jsonData.desktop.js[elmCounter])}\n`;
                                 errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
                                 logger.warn(errMsg);
                                 setTimeout(() => { this.upload_DesktopCss(jsonData, elmCounter, --timeout); }, RETRY_TIMEOUT_MSEC);
@@ -280,9 +279,9 @@ controller.prototype = {
                             this.upload_MobileJs(jsonData, ++elmCounter);
                         } else {
                             if (0 < timeout) {
-                                var errMsg = `errorNode: ${util.inspect(jsonData.mobile.js[elmCounter], { depth: null })}\n`;
-                                errMsg += `error: ${util.inspect(error, { depth: null })}\n`;
-                                errMsg += `body: ${util.inspect(body, { depth: null })}\n`;
+                                var errMsg = `errorNode: ${consoleJson(jsonData.mobile.js[elmCounter])}\n`;
+                                errMsg += `error: ${consoleJson(error)}\n`;
+                                errMsg += `body: ${consoleJson(body)}\n`;
                                 errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
                                 logger.warn(errMsg);
                                 setTimeout(() => { this.upload_MobileJs(jsonData, elmCounter, --timeout); }, RETRY_TIMEOUT_MSEC);
@@ -315,7 +314,7 @@ controller.prototype = {
         try {
             // 変更反映前、ログ出力
             logger.info(msg('before_AppSettingChange'));
-            logger.info(util.inspect(jsonData, { depth: null }));
+            logger.info(consoleJson(jsonData));
 
             const sendData = this.deleteJsonKey(deepClone(jsonData));
 
@@ -337,8 +336,8 @@ controller.prototype = {
                     this.deploy(jsonData);
                 } else {
                     if (0 < timeout) {
-                        var errMsg = `error: ${util.inspect(error, { depth: null })}\n`;
-                        errMsg += `body: ${util.inspect(body, { depth: null })}\n`;
+                        var errMsg = `error: ${consoleJson(error)}\n`;
+                        errMsg += `body: ${consoleJson(body)}\n`;
                         errMsg += `${msg('change_AppSettingsError')} retry:${timeout}`;
                         logger.warn(errMsg);
                         setTimeout(() => { this.chageAppSettings(jsonData, --timeout); }, RETRY_TIMEOUT_MSEC);
@@ -380,8 +379,8 @@ controller.prototype = {
 
                 } else {
                     if (0 < timeout) {
-                        var errMsg = `error: ${util.inspect(error, { depth: null })}\n`;
-                        errMsg += `body: ${util.inspect(body, { depth: null })}\n`;
+                        var errMsg = `error: ${consoleJson(error)}\n`;
+                        errMsg += `body: ${consoleJson(body)}\n`;
                         errMsg += `${msg('deploy_Error')} retry:${timeout}\n`;
                         logger.warn(errMsg);
                         setTimeout(() => { this.deploy(jsonData, --timeout); }, RETRY_TIMEOUT_MSEC);
@@ -616,6 +615,15 @@ const Base64 = {
         return btoa(unescape(encodeURIComponent(str)));
     }
 };
+
+const consoleJson = function(msg){
+    return JSON.stringify(msg, function (key, val) {
+        if (typeof val === "function") {
+            return val.toString();
+        }
+        return val;
+    }, ' ');
+}
 
 var msg = null;
 const run = (domain, username, password, manifestFile, options) => {

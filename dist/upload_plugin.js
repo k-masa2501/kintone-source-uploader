@@ -99,7 +99,13 @@ function readyForUpload(browser, domain, userName, password, lang) {
 }
 function upload(page, pluginPath, lang) {
     return __awaiter(this, void 0, void 0, function* () {
+
+        async function sleep(delay) {
+            return new Promise(resolve => setTimeout(resolve, delay));
+        }
+
         const m = messages_1.getBoundMessage(lang);
+
         console.log(`Trying to upload ${pluginPath}`);
         yield page.click("#page-admin-system-plugin-index-addplugin");
         const file = yield page.$('.plupload > input[type="file"]');
@@ -108,12 +114,14 @@ function upload(page, pluginPath, lang) {
         }
         yield file.uploadFile(pluginPath);
         yield page.click('button[name="ok"]');
-		if (yield page.click(".ocean-ui-dialog")){
-			yield page.waitForSelector(".ocean-ui-dialog", {
-				hidden: true,
-				timeout: TIMEOUT_MS
-			});
-		}
+        if (yield page.click(".ocean-ui-dialog")){
+            yield page.waitForSelector(".ocean-ui-dialog", {
+                hidden: true,
+                timeout: TIMEOUT_MS
+            });
+        }
+        
+        yield sleep(1000);
         console.log(`${pluginPath} ${m("Uploaded")}`);
     });
 }
