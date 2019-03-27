@@ -1,6 +1,6 @@
 # kintone-source-uploader
-[![pipeline status](https://gitlab.com/k-masa2501/kintone-source-uploader/badges/develop/pipeline.svg)](https://gitlab.com/k-masa2501/kintone-source-uploader/commits/develop)
-[![coverage report](https://gitlab.com/k-masa2501/kintone-source-uploader/badges/develop/coverage.svg)](https://gitlab.com/k-masa2501/kintone-source-uploader/commits/develop)  
+[![pipeline status](https://gitlab.com/k-masa2501/kintone-source-uploader/badges/master/pipeline.svg)](https://gitlab.com/k-masa2501/kintone-source-uploader/commits/master)
+[![coverage report](https://gitlab.com/k-masa2501/kintone-source-uploader/badges/master/coverage.svg)](https://gitlab.com/k-masa2501/kintone-source-uploader/commits/master)  
 ## 概要
 kintoneの以下のソースコードをアップロードすることが可能です。  
 - kintoneプラグイン  
