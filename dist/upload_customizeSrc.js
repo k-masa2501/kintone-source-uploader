@@ -8,7 +8,6 @@ const path = require('path');
 const fs = require('fs');
 const messages_1 = require("./messages");
 const request = require("request");
-const formData = require('form-data');
 const btoa = require('btoa');
 const { Validator } = require('jsonschema');
 const { Mutex } = require('await-semaphore');
@@ -166,10 +165,15 @@ controller.prototype = {
                 jsonData.desktop.js[elmCounter].file.fileKey == null) {
 
                 const request = this.requestWithProxy();
-                const options = { url: this.kintoneUrl("/k/v1/file") };
-                const formData = this.createFormData(jsonData.desktop.js[elmCounter].file.name);
+                const options = { 
+                    url: this.kintoneUrl("/k/v1/file"),
+                    headers: {
+                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+                    },
+                    formData: createFormData(jsonData.desktop.js[elmCounter].file.name)
+                };
 
-                if (formData) {
+                if (options.formData) {
                     const r = request.post(options, (error, response, body) => {
                         if (!error && (response.statusCode === 200)) {
                             logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.desktop.js[elmCounter].file.name}`);
@@ -190,8 +194,7 @@ controller.prototype = {
                             }
                         }
                     });
-                    r._form = formData;
-                    r.setHeader("X-Cybozu-Authorization", Base64.encode(`${this.username}:${this.password}`));
+
                 }else{
                     logger.error(msg('targetfile_NotRead'));
                     return;
@@ -215,10 +218,15 @@ controller.prototype = {
                 jsonData.desktop.css[elmCounter].file.fileKey == null) {
 
                 const request = this.requestWithProxy();
-                const options = { url: this.kintoneUrl("/k/v1/file") };
-                const formData = this.createFormData(jsonData.desktop.css[elmCounter].file.name);
+                const options = {
+                    url: this.kintoneUrl("/k/v1/file"),
+                    headers: {
+                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+                    },
+                    formData: createFormData(jsonData.desktop.css[elmCounter].file.name)
+                };
 
-                if (formData) {
+                if (options.formData) {
                     const r = request.post(options, (error, response, body) => {
                         if (!error && (response.statusCode === 200)) {
                             logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.desktop.css[elmCounter].file.name}`);
@@ -239,8 +247,6 @@ controller.prototype = {
                             }
                         }
                     });
-                    r._form = formData;
-                    r.setHeader("X-Cybozu-Authorization", Base64.encode(`${this.username}:${this.password}`));
                 } else {
                     logger.error(msg('targetfile_NotRead'));
                     return;
@@ -265,10 +271,15 @@ controller.prototype = {
                 jsonData.mobile.js[elmCounter].file.fileKey == null) {
 
                 const request = this.requestWithProxy();
-                const options = { url: this.kintoneUrl("/k/v1/file") };
-                const formData = this.createFormData(jsonData.mobile.js[elmCounter].file.name);
+                const options = {
+                    url: this.kintoneUrl("/k/v1/file"),
+                    headers: {
+                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+                    },
+                    formData: createFormData(jsonData.mobile.js[elmCounter].file.name)
+                };
 
-                if (formData) {
+                if (options.formData) {
                     const r = request.post(options, (error, response, body) => {
                         if (!error && (response.statusCode === 200)) {
                             logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.mobile.js[elmCounter].file.name}`);
@@ -289,8 +300,6 @@ controller.prototype = {
                             }
                         }
                     });
-                    r._form = formData;
-                    r.setHeader("X-Cybozu-Authorization", Base64.encode(`${this.username}:${this.password}`));
                 } else {
                     logger.error(msg('targetfile_NotRead'));
                     return;
@@ -312,7 +321,7 @@ controller.prototype = {
             logger.info(msg('before_AppSettingChange'));
             logger.info(consoleJson(jsonData));
 
-            const sendData = this.deleteJsonKey(deepClone(jsonData));
+            const sendData = deleteJsonKey(deepClone(jsonData));
 
             const request = this.requestWithProxy();
             const options = {
@@ -389,32 +398,6 @@ controller.prototype = {
             logger.error(error);
         }
     },
-    deleteJsonKey: function(jsonData) {
-        delete jsonData.guest_space_id;
-        delete jsonData.revision;
-        for (var i = 0, len = jsonData.desktop.js.length; i < len; i++) {
-            if (jsonData.desktop.js[i].file) {
-                delete jsonData.desktop.js[i].file.contentType;
-                delete jsonData.desktop.js[i].file.name;
-                delete jsonData.desktop.js[i].file.size;
-            }
-        }
-        for (var i = 0, len = jsonData.desktop.css.length; i < len; i++) {
-            if (jsonData.desktop.css[i].file) {
-                delete jsonData.desktop.css[i].file.contentType;
-                delete jsonData.desktop.css[i].file.name;
-                delete jsonData.desktop.css[i].file.size;
-            }
-        }
-        for (var i = 0, len = jsonData.mobile.js.length; i < len; i++) {
-            if (jsonData.mobile.js[i].file) {
-                delete jsonData.mobile.js[i].file.contentType;
-                delete jsonData.mobile.js[i].file.name;
-                delete jsonData.mobile.js[i].file.size;
-            }
-        }
-        return jsonData;
-    },
     kintoneUrl: function(_url) {
 
         const url = _url.replace(".json", "");
@@ -432,21 +415,59 @@ controller.prototype = {
         }
         return request;
 
-    },
-    createFormData: function(filePath) {
-        const target = path.join(manifest.path, filePath);
-        const form = new formData();
-
-        try {
-            fs.statSync(target);
-            form.append('file', fs.createReadStream(target), path.basename(filePath));
-            return form;
-        } catch (e) {
-            logger.warn(`${msg('targetSrc_ReadError')}, e:${e}`);
-            return null;
-        }
     }
 };
+
+const deleteJsonKey = function (jsonData) {
+    delete jsonData.guest_space_id;
+    delete jsonData.revision;
+    for (var i = 0, len = jsonData.desktop.js.length; i < len; i++) {
+        if (jsonData.desktop.js[i].file) {
+            delete jsonData.desktop.js[i].file.contentType;
+            delete jsonData.desktop.js[i].file.name;
+            delete jsonData.desktop.js[i].file.size;
+        }
+    }
+    for (var i = 0, len = jsonData.desktop.css.length; i < len; i++) {
+        if (jsonData.desktop.css[i].file) {
+            delete jsonData.desktop.css[i].file.contentType;
+            delete jsonData.desktop.css[i].file.name;
+            delete jsonData.desktop.css[i].file.size;
+        }
+    }
+    for (var i = 0, len = jsonData.mobile.js.length; i < len; i++) {
+        if (jsonData.mobile.js[i].file) {
+            delete jsonData.mobile.js[i].file.contentType;
+            delete jsonData.mobile.js[i].file.name;
+            delete jsonData.mobile.js[i].file.size;
+        }
+    }
+    return jsonData;
+}
+
+const createFormData = function(filePath){
+
+    const target = path.join(manifest.path, filePath);
+    var stream = null;
+
+    try {
+        fs.statSync(target);
+        stream = fs.createReadStream(target);
+        return {
+            name: path.basename(filePath),
+            file: {
+                value: stream,
+                options: {
+                    filename: path.basename(filePath),
+                    contentType: 'text/plain'
+                }
+            }
+        }
+    } catch (e) {
+        logger.warn(`${msg('targetSrc_ReadError')}, e:${e}`);
+        return null;
+    }
+}
 
 const logger = {
     error: (msg) => {
