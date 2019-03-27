@@ -122,7 +122,6 @@ controller.prototype = {
             const options = {
                 url: this.kintoneUrl("/k/v1/preview/app/deploy"),
                 headers: {
-                    "Host": `${this.domain}:443`,
                     "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                     "Content-Type": "application/json"
                 },
@@ -192,7 +191,6 @@ controller.prototype = {
                         }
                     });
                     r._form = formData;
-                    r.setHeader("Host", `${this.domain}:443`);
                     r.setHeader("X-Cybozu-Authorization", Base64.encode(`${this.username}:${this.password}`));
                 }else{
                     logger.error(msg('targetfile_NotRead'));
@@ -242,7 +240,6 @@ controller.prototype = {
                         }
                     });
                     r._form = formData;
-                    r.setHeader("Host", `${this.domain}:443`);
                     r.setHeader("X-Cybozu-Authorization", Base64.encode(`${this.username}:${this.password}`));
                 } else {
                     logger.error(msg('targetfile_NotRead'));
@@ -293,7 +290,6 @@ controller.prototype = {
                         }
                     });
                     r._form = formData;
-                    r.setHeader("Host", `${this.domain}:443`);
                     r.setHeader("X-Cybozu-Authorization", Base64.encode(`${this.username}:${this.password}`));
                 } else {
                     logger.error(msg('targetfile_NotRead'));
@@ -322,7 +318,6 @@ controller.prototype = {
             const options = {
                 url: this.kintoneUrl("/k/v1/preview/app/customize"),
                 headers: {
-                    "Host": `${this.domain}:443`,
                     "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                     "Content-Type": "application/json"
                 },
@@ -362,7 +357,6 @@ controller.prototype = {
             const options = {
                 url: this.kintoneUrl("/k/v1/preview/app/deploy"),
                 headers: {
-                    "Host": `${this.domain}:443`,
                     "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                     "Content-Type": "application/json"
                 },
