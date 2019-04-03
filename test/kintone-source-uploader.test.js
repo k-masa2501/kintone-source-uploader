@@ -526,7 +526,17 @@
                 "test/test_data/jsEdit_plugin_v4.1.zip",
                 { lang: "ja", proxyServer: process.env.HTTP_PROXY }
             );
+        });
 
+        it('upload faild.', async function () {
+
+            await pluginUpload_run(
+                process.env.KINTONE_DOMAIN,
+                process.env.KINTONE_USERNAME,
+                process.env.KINTONE_PASSWORD,
+                "test/test_data/plugin_error.zip",
+                { lang: "ja", proxyServer: process.env.HTTP_PROXY }
+            );
         });
 
         afterEach(function () {

@@ -114,14 +114,16 @@ function upload(page, pluginPath, lang) {
         }
         yield file.uploadFile(pluginPath);
         yield page.click('button[name="ok"]');
-        if (yield page.click(".ocean-ui-dialog")){
-            yield page.waitForSelector(".ocean-ui-dialog", {
-                hidden: true,
-                timeout: TIMEOUT_MS
-            });
+        
+        try{
+        	yield page.waitForSelector(".ocean-ui-dialog", {
+            	hidden: true,
+            	timeout: TIMEOUT_MS
+        	});
+        }catch(e){
+            throw new Error(`upload faild.reason: ${e.message}`);
         }
         
-        yield sleep(1000);
         console.log(`${pluginPath} ${m("Uploaded")}`);
     });
 }
