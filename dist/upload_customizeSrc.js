@@ -102,6 +102,13 @@ controller.prototype = {
                     return true;
                 }
             }
+            
+            for (var i = 0, len = jsonData.mobile.css.length; i < len; i++) {
+                if (jsonData.mobile.css[i].file &&
+                    jsonData.mobile.css[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
+                    return true;
+                }
+            }
         }
         return false;
     },
@@ -308,6 +315,58 @@ controller.prototype = {
             } else if (jsonData.mobile.js[++elmCounter]) {
                 this.upload_MobileJs(jsonData, elmCounter);
             } else {
+                this.upload_MobileCss(jsonData);
+            }
+        } catch (error) {
+            logger.error(error);
+        }
+    },
+    upload_MobileCss: function (jsonData, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
+
+        try {
+            if (jsonData.mobile.css[elmCounter] &&
+                jsonData.mobile.css[elmCounter].type === "FILE" &&
+                jsonData.mobile.css[elmCounter].file &&
+                jsonData.mobile.css[elmCounter].file.fileKey == null) {
+
+                const request = this.requestWithProxy();
+                const options = {
+                    url: this.kintoneUrl("/k/v1/file"),
+                    headers: {
+                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+                    },
+                    formData: createFormData(jsonData.mobile.css[elmCounter].file.name)
+                };
+
+                if (options.formData) {
+                    const r = request.post(options, (error, response, body) => {
+                        if (!error && (response.statusCode === 200)) {
+                            logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.mobile.css[elmCounter].file.name}`);
+                            jsonData.mobile.css[elmCounter].file.fileKey = JSON.parse(response.body).fileKey;
+                            this.upload_MobileCss(jsonData, ++elmCounter);
+                        } else {
+                            if (0 < timeout) {
+                                var errMsg = `errorNode: ${consoleJson(jsonData.mobile.css[elmCounter])}\n`;
+                                errMsg += `error: ${consoleJson(error)}\n`;
+                                errMsg += `body: ${consoleJson(body)}\n`;
+                                errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
+                                logger.warn(errMsg);
+                                setTimeout(() => { this.upload_MobileCss(jsonData, elmCounter, --timeout); }, RETRY_TIMEOUT_MSEC);
+                            } else {
+                                // リトライタイムアウト。リトライ処理を終了します。
+                                logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
+                                return;
+                            }
+                        }
+                    });
+                } else {
+                    logger.error(msg('targetfile_NotRead'));
+                    return;
+                }
+
+            } else if (jsonData.mobile.css[++elmCounter]) {
+                this.upload_MobileCss(jsonData, elmCounter);
+            } else {
                 this.chageAppSettings(jsonData);
             }
         } catch (error) {
@@ -440,6 +499,13 @@ const deleteJsonKey = function (jsonData) {
             delete jsonData.mobile.js[i].file.contentType;
             delete jsonData.mobile.js[i].file.name;
             delete jsonData.mobile.js[i].file.size;
+        }
+    }
+    for (var i = 0, len = jsonData.mobile.css.length; i < len; i++) {
+        if (jsonData.mobile.css[i].file) {
+            delete jsonData.mobile.css[i].file.contentType;
+            delete jsonData.mobile.css[i].file.name;
+            delete jsonData.mobile.css[i].file.size;
         }
     }
     return jsonData;
@@ -577,11 +643,17 @@ const manifest = {
             },
             mobile: {
                 type: 'object',
-                required: ['js'],
-                maxProperties: 1,
-                minProperties: 1,
+                required: ['js', 'css'],
+                maxProperties: 2,
+                minProperties: 2,
                 properties: {
                     js: {
+                        type: "array",
+                        items: {
+                            type: "object"
+                        }
+                    },
+                    css: {
                         type: "array",
                         items: {
                             type: "object"

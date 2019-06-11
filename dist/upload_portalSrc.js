@@ -178,6 +178,31 @@ function upload(page, lang) {
             }
         }
 
+        /**** モバイル用css ****/
+        console.log(`\nTrying to mobile css upload..`);
+        const mobileCss = yield jsCssItem[3].$('.plupload > input[type="file"]');
+        if (mobileCss == null) {
+			console.log(chalk_1.default.red('input[type="file"] cannot find'));
+            process.exit(1);
+        }
+
+        for (var i5 = 0, len = manifest.json.mobile.css.length; i5 < len; i5++) {
+            console.log(`Trying to upload ${manifest.json.mobile.css[i5]}`);
+            if (manifest.fileCheck(`${manifest.path}/${manifest.json.mobile.css[i5]}`)) {
+                yield mobileCss.uploadFile(`${manifest.path}/${manifest.json.mobile.css[i5]}`);
+            } else {
+                console.warn(`Abort upload!! ${manifest.json.mobile.css[i5]} does not exist.`);
+                return false;
+            }
+
+            yield sleep(100);
+            if (yield page.$("#jsFiles_MOBILE_CSS-container + .input-error-cybozu")) {
+                console.warn(`Abort upload!! ${manifest.json.mobile.css[i5]}：${msg('Upload_NotPermittedFormat')}`);
+				return false;
+            }
+        }
+
+
         try{
 			/* ボタンクリック */
 			yield page.click('.button-submit-cybozu');
@@ -281,6 +306,13 @@ const checkNeedToSourceUpload = (targetFilePath) => {
         for (var i = 0, len = jsonData.mobile.js.length; i < len; i++) {
             if (jsonData.mobile.js[i] &&
                 jsonData.mobile.js[i].pathReplace() === targetFilePath.pathReplace()) {
+                return true;
+            }
+        }
+        
+        for (var i = 0, len = jsonData.mobile.css.length; i < len; i++) {
+            if (jsonData.mobile.css[i] &&
+                jsonData.mobile.css[i].pathReplace() === targetFilePath.pathReplace()) {
                 return true;
             }
         }
@@ -388,11 +420,17 @@ const manifest = {
             },
             mobile: {
                 type: 'object',
-                required: ['js'],
-                maxProperties: 1,
-                minProperties: 1,
+                required: ['js', 'css'],
+                maxProperties: 2,
+                minProperties: 2,
                 properties: {
                     js: {
+                        type: "array",
+                        items: {
+                            type: "string"
+                        }
+                    },
+                    css: {
                         type: "array",
                         items: {
                             type: "string"

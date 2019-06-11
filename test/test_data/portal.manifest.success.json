@@ -13,6 +13,10 @@
         "js": [
             "js/mobile/mobile1.js",
 			"js/mobile/mobile2.js"
-        ] 
+        ],
+        "css": [
+			"css/mobile1.css",
+			"css/mobile2.css"
+        ]
     }
 }

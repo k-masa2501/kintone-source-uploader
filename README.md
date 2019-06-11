@@ -76,7 +76,7 @@ or
             {
                 "type": "FILE",
                 "file": {
-                    "name": "css/common.css"
+                    "name": "css/desktop.css"
                 }
             }
         ]
@@ -91,6 +91,18 @@ or
                 "type": "FILE",
                 "file": {
                     "name": "js/mobile/menuManage.js"
+                }
+            }
+        ],
+        "css": [
+           {
+                "type": "URL",
+                "url": "https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "css/mobile.css"
                 }
             }
         ] 
@@ -112,7 +124,7 @@ or
             "js/Desktop/PortalPlugin.js"
         ],
         "css": [
-            "css/common.css",
+            "css/desktop.css",
             "css/contentHeader.css"
         ]
     },
@@ -120,6 +132,10 @@ or
         "js": [
             "def_GlobalAppId.js",
             "js/mobile/PortalPlugin.js"
+        ],
+        "css": [
+            "css/mobile.css",
+            "css/contentHeader.css"
         ]
     }
 }

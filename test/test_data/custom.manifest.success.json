@@ -1,5 +1,5 @@
 {
-    "app": 1,
+    "app": 10,
     "guest_space_id": 0,
     "scope": "ALL",
     "desktop": {
@@ -56,6 +56,24 @@
                 "type": "FILE",
                 "file": {
                     "name": "js/mobile/mobile2.js"
+                }
+            }
+        ],
+        "css": [
+           {
+                "type": "URL",
+                "url": "https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css"
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "css/mobile1.css"
+                }
+            },
+            {
+                "type": "FILE",
+                "file": {
+                    "name": "css/mobile2.css"
                 }
             }
         ] 
