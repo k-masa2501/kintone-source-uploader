@@ -10,9 +10,32 @@ const { portalUpload_run } = require("../dist/upload_portalSrc");
 const { pluginUpload_run } = require("../dist/upload_plugin");
 const { getMessage } = require("../dist/messages");
 
-function run({username, password, domain, proxy, watch, waitingDialogMs, lang, customSrc, portalSrc }, pluginPath, showhelp) {
+function run(
+    {
+        username, 
+        password, 
+        domain, 
+        proxy, 
+        watch, 
+        waitingDialogMs, 
+        lang, 
+        customSrc, 
+        portalSrc,
+        diff
+    }, 
+    pluginPath, showhelp) {
 
-    const options = proxy ? { watch, lang, proxyServer: proxy } : { watch, lang, proxyServer: null };
+    const options = proxy ? { 
+        watch, 
+        lang, 
+        proxyServer: proxy,
+        diff 
+    } : { 
+        watch, 
+        lang, 
+        proxyServer: null,
+        diff
+    };
 
     const wait = ms => new Promise(r => setTimeout(r, ms));
 

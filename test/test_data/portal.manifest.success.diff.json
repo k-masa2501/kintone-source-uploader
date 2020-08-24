@@ -1,0 +1,18 @@
+{
+    "desktop": {
+        "js": [
+            "js/desktop/dDiff.js"
+        ],
+        "css": [
+			"css/dDiff.css"
+        ]
+    },
+    "mobile": {
+        "js": [
+            "js/mobile/mDiff.js"
+        ],
+        "css": [
+			"css/mDiff.css"
+        ]
+    }
+}
