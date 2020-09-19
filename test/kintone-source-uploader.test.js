@@ -570,14 +570,14 @@
             );
         });
 
-        it('difference upload success.', async function () {
+        it('all js upload success.', async function () {
 
             await portalUpload_run(
                 process.env.KINTONE_DOMAIN,
                 process.env.KINTONE_USERNAME,
                 process.env.KINTONE_PASSWORD,
-                "test/test_data/portal.manifest.success.diff.json",
-                { lang: "ja", proxyServer: process.env.HTTP_PROXY, diff: true }
+                "test/test_data/portal.manifest.success.all.json",
+                { lang: "ja", proxyServer: process.env.HTTP_PROXY, all: true }
             );
         });
 

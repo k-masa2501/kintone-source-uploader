@@ -36,7 +36,7 @@ const cli = meow(
     --lang Using language (en or ja)
     --customSrc specify customSrc manifest file.
     --portalSrc specify portalSrc manifest file.
-    --diff All JS differential upload.
+    --all all js upload.
 
     You can set the values through environment variables
     domain: KINTONE_DOMAIN
@@ -82,7 +82,7 @@ const cli = meow(
                 type: "string",
                 default: ""
             },
-            diff: {
+            all: {
                 type: "boolean",
                 default: false
             }

@@ -91,7 +91,7 @@ function readyForUpload(browser, domain, userName, password, lang) {
         return page;
     });
 }
-function upload(page, lang, diff) {
+function upload(page, lang, all) {
     return __awaiter(this, void 0, void 0, function* () {
 
         async function sleep(delay) {
@@ -99,7 +99,7 @@ function upload(page, lang, diff) {
         }
 
         // 既にアップロード済みのファイルを解除
-        if (!diff){
+        if (all){
             const removeList = yield page.$$("[id*=-pre-remove]");
             for (var i3 = 0; i3 < removeList.length; i3++) {
                 yield removeList[i3].click();
@@ -224,7 +224,7 @@ function upload(page, lang, diff) {
 function run(domain, userName, password, manifestFile, options) {
 
     const { lang } = options;
-    const { diff } = options;
+    const { all } = options;
     msg = messages_1.getBoundMessage(lang);
 
     // マニフェストロード
@@ -240,7 +240,7 @@ function run(domain, userName, password, manifestFile, options) {
         const { lang } = options;
         try {
             page = yield readyForUpload(browser, domain, userName, password, lang);
-            yield upload(page, lang, diff);
+            yield upload(page, lang, all);
             if (options.watch) {
                 let uploading = false;
                 fs_1.default.watch(manifest.path, { persistent: true, recursive: true }, (eventType, targetFilePath) => __awaiter(this, void 0, void 0, function* () {
@@ -251,14 +251,14 @@ function run(domain, userName, password, manifestFile, options) {
                     if (checkNeedToSourceUpload(targetFilePath)) {
                         try {
                             uploading = true;
-                            yield upload(page, lang, diff);
+                            yield upload(page, lang, all);
                         } catch (e) {
                             console.log(e);
                             console.log(msg("Error_retry"));
                             yield browser.close();
                             browser = yield launchBrowser(options.proxyServer);
                             page = yield readyForUpload(browser, domain, userName, password, lang);
-                            yield upload(page, lang, diff);
+                            yield upload(page, lang, all);
                         } finally {
                             uploading = false;
                         }

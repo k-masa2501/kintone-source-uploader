@@ -21,7 +21,7 @@ function run(
         lang, 
         customSrc, 
         portalSrc,
-        diff
+        all
     }, 
     pluginPath, showhelp) {
 
@@ -29,12 +29,12 @@ function run(
         watch, 
         lang, 
         proxyServer: proxy,
-        diff 
+        all 
     } : { 
         watch, 
         lang, 
         proxyServer: null,
-        diff
+        all
     };
 
     const wait = ms => new Promise(r => setTimeout(r, ms));
