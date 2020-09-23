@@ -53,6 +53,7 @@ function launchBrowser(proxy) {
         return yield puppeteer_1.default.launch({ args });
     });
 }
+
 function readyForUpload(browser, domain, userName, password, lang) {
     return __awaiter(this, void 0, void 0, function* () {
         const page = yield browser.newPage();
@@ -91,6 +92,70 @@ function readyForUpload(browser, domain, userName, password, lang) {
         return page;
     });
 }
+
+function itemDelete(page, fileName, selector){
+    return __awaiter(this, void 0, void 0, function* () {
+        const removeDivs = yield page.$$(selector);
+        var aTag = null;
+        var textHundle = null;
+        var text = null;
+        var deleteTag = null;
+
+        for (var i1 = 0; i1 < removeDivs.length; i1++) {
+            aTag = yield removeDivs[i1].$('.plupload_file_name a');
+            if (!(yield aTag)){continue;}
+
+            textHundle = yield aTag.getProperty('textContent');
+            text = yield textHundle.jsonValue();
+
+            if (text === fileName){
+                deleteTag = yield removeDivs[i1].$("[id*=-pre-remove]");
+                if (yield deleteTag){
+                    yield deleteTag.click();
+                }
+            }
+        }
+
+        return;
+    });
+}
+
+function desktopJsItemDelete(page, filePath){
+    return __awaiter(this, void 0, void 0, function* () {
+        var fileName = filePath.split("/");
+        fileName = fileName[fileName.length-1];
+        yield itemDelete(page, fileName, "#jsFiles_DESKTOP-filelist > div");
+        return;
+    });
+}
+
+function desktopCssItemDelete(page, filePath){
+    return __awaiter(this, void 0, void 0, function* () {
+        var fileName = filePath.split("/");
+        fileName = fileName[fileName.length-1];
+        yield itemDelete(page, fileName, "#jsFiles_DESKTOP_CSS-filelist > div");
+        return;
+    });
+}
+
+function mobileJsItemDelete(page, filePath){
+    return __awaiter(this, void 0, void 0, function* () {
+        var fileName = filePath.split("/");
+        fileName = fileName[fileName.length-1];
+        yield itemDelete(page, fileName, "#jsFiles_MOBILE-filelist > div");
+        return;
+    });
+}
+
+function mobileCssItemDelete(page, filePath){
+    return __awaiter(this, void 0, void 0, function* () {
+        var fileName = filePath.split("/");
+        fileName = fileName[fileName.length-1];
+        yield itemDelete(page, fileName, "#jsFiles_MOBILE_CSS-filelist > div");
+        return;
+    });
+}
+
 function upload(page, lang, all) {
     return __awaiter(this, void 0, void 0, function* () {
 
@@ -118,6 +183,7 @@ function upload(page, lang, all) {
         for (var i2 = 0, len = manifest.json.desktop.js.length; i2 < len; i2++) {
             console.log(`Trying to upload ${manifest.json.desktop.js[i2]}`);
             if (manifest.fileCheck(`${manifest.path}/${manifest.json.desktop.js[i2]}`)){
+                if (!all){ yield desktopJsItemDelete(page, manifest.json.desktop.js[i2]);}
                 yield desktopJs.uploadFile(`${manifest.path}/${manifest.json.desktop.js[i2]}`);
             }else{
                 console.error(`Abort upload!! [${manifest.json.desktop.js[i2]}] does not exist.`);
@@ -129,7 +195,6 @@ function upload(page, lang, all) {
                 console.error(`Abort upload!! ${manifest.json.desktop.js[i2]}：${msg('Upload_NotPermittedFormat')}`);
 				return false;
             }
-
         }
 
         /**** モバイル用Javascript ****/
@@ -143,6 +208,7 @@ function upload(page, lang, all) {
         for (var i4 = 0, len = manifest.json.mobile.js.length; i4 < len; i4++) {
             console.log(`Trying to upload ${manifest.json.mobile.js[i4]}`);
             if (manifest.fileCheck(`${manifest.path}/${manifest.json.mobile.js[i4]}`)) {
+                if (!all){ yield mobileJsItemDelete(page, manifest.json.mobile.js[i4]);}
                 yield mobilejs.uploadFile(`${manifest.path}/${manifest.json.mobile.js[i4]}`);
             } else {
                 console.error(`Abort upload!! ${manifest.json.mobile.js[i4]} does not exist.`);
@@ -167,6 +233,7 @@ function upload(page, lang, all) {
         for (var i1 = 0, len = manifest.json.desktop.css.length; i1 < len; i1++) {
             console.log(`Trying to upload ${manifest.json.desktop.css[i1]}`);
             if (manifest.fileCheck(`${manifest.path}/${manifest.json.desktop.css[i1]}`)) {
+                if (!all){ yield desktopCssItemDelete(page, manifest.json.desktop.css[i1]);}
                 yield desktopCss.uploadFile(`${manifest.path}/${manifest.json.desktop.css[i1]}`);
             } else {
                 console.warn(`Abort upload!! ${manifest.json.desktop.css[i1]} does not exist.`);
@@ -191,6 +258,7 @@ function upload(page, lang, all) {
         for (var i5 = 0, len = manifest.json.mobile.css.length; i5 < len; i5++) {
             console.log(`Trying to upload ${manifest.json.mobile.css[i5]}`);
             if (manifest.fileCheck(`${manifest.path}/${manifest.json.mobile.css[i5]}`)) {
+                if (!all){ yield mobileCssItemDelete(page, manifest.json.mobile.css[i5]);}
                 yield mobileCss.uploadFile(`${manifest.path}/${manifest.json.mobile.css[i5]}`);
             } else {
                 console.warn(`Abort upload!! ${manifest.json.mobile.css[i5]} does not exist.`);
@@ -204,10 +272,9 @@ function upload(page, lang, all) {
             }
         }
 
-
         try{
-			/* ボタンクリック */
-			yield page.click('.button-submit-cybozu');
+            /* ボタンクリック */
+            yield page.click('.button-submit-cybozu');
             yield page.waitForSelector(".notifier-success-cybozu", {
                 visible: true,
                 timeout: TIMEOUT_MS
@@ -221,6 +288,7 @@ function upload(page, lang, all) {
 
     });
 }
+
 function run(domain, userName, password, manifestFile, options) {
 
     const { lang } = options;
