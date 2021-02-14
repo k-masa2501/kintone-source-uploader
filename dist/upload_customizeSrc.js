@@ -7,12 +7,12 @@
 const path = require('path');
 const fs = require('fs');
 const messages_1 = require("./messages");
-const request = require("request");
+let requestPr = require("request-promise");
 const btoa = require('btoa');
 const { Validator } = require('jsonschema');
-const { Mutex } = require('await-semaphore');
+const { Semaphore } = require('./semaphore');
 const  os = require('os');
-const mutex = { obj: new Mutex(), release: null};
+const mutex = { obj: new Semaphore(1, 2), release: null};
 const RETRY_TIMEOUT_MSEC = 3000;
 const RETRY_TIMEOUT_COUNT = 3;
 //msec
@@ -39,28 +39,25 @@ const controller = function(domain, username, password, manifestFile, options) {
         process.exit(1);
     }
 
+    // use proxy
+    if (this.options.proxyServer) {
+        requestPr =  requestPr.defaults(
+            { 'proxy': this.options.proxyServer });
+    }
+
     // ソースコードアップロード
-    this.rapper_execRun();
+    this.execUploadRun();
 
     // ファイル変更監視
     if (options.watch){
-        this.watch();
-    }
-};
-
-controller.prototype = {
-	getMutex: function(){
-		return mutex;
-	},
-    watch: function(){
-        var startTime = null;
+        let startTime = null;
         fs.watch(manifest.path, { persistent: true, recursive: true }, (eventType, targetFilePath) => {
             // 前回からの処理時間が100ミリ未満の場合、同一ファイルの変更とみなして処理しない。
             if (!startTime || 100 < (Date.now() - startTime)){
                 if (eventType === 'change') {
                     ((result) => {
                         if (result) {
-                            this.rapper_execRun();
+                            this.execUploadRun();
                         }
                     })(this.checkNeedToSourceUpload(targetFilePath));
                 }
@@ -69,7 +66,10 @@ controller.prototype = {
             // 計測開始
             startTime = Date.now();
         });
-    },
+    }
+};
+
+controller.prototype = {
     checkNeedToSourceUpload: function(targetFilePath) {
         if (manifest.fileName === targetFilePath){
             if (!manifest.reload()){
@@ -81,7 +81,7 @@ controller.prototype = {
         }
 
         if (manifest.json) {
-            const jsonData = manifest.json;
+            let jsonData = manifest.json;
             for (var i = 0, len = jsonData.desktop.js.length; i < len; i++) {
                 if (jsonData.desktop.js[i].file &&
                     jsonData.desktop.js[i].file.name.pathReplace() === targetFilePath.pathReplace()) {
@@ -112,369 +112,435 @@ controller.prototype = {
         }
         return false;
     },
-    rapper_execRun: async function () {
-        try{
-            mutex.release = await mutex.obj.acquire();
-            this.execRun();
-        }catch(e){
-            if (mutex.release) mutex.release();
-        }
-    },
-    execRun: function (timeout = RETRY_TIMEOUT_COUNT) {
+    execUploadRun: function () {
+        return mutex.obj.acquire()
+        .then(
+            async release => {
+        
+                let jsonData = deepClone(manifest.json);
 
-        const jsonData = deepClone(manifest.json);
-        try {
-            const request = this.requestWithProxy();
-            const options = {
-                url: this.kintoneUrl("/k/v1/preview/app/deploy"),
+                // get mutex release
+                mutex.release = release;
+
+                if (0 !== await this.checkAppReflectionStats(jsonData)){
+                    return;
+                }
+
+                if (0 !== await this.upload_DesktopJs(jsonData)){
+                    return;
+                }
+
+                if (0 !== await this.upload_DesktopCss(jsonData)){
+                    return;
+                }
+
+                if (0 !== await this.upload_MobileJs(jsonData)){
+                    return;
+                }
+
+                if (0 !== await this.upload_MobileCss(jsonData)){
+                    return;
+                }
+
+                if (0 !== await this.chageAppSettings(jsonData)){
+                    return;
+                }
+
+                await this.deploy(jsonData);
+
+                return;
+            }
+        )
+        .catch(e => console.warn(`warn: ${e.message}`));
+    },
+    checkAppReflectionStats: async function (jsonData, timeout = RETRY_TIMEOUT_COUNT) {
+
+        let options = {
+                uri: this.kintoneUrl("/k/v1/preview/app/deploy"),
                 headers: {
                     "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ "apps": [jsonData.app] })
+                body: { "apps": [jsonData.app] },
+                resolveWithFullResponse: true,
+                json: true
             };
 
-            request.get(options,  (error, response, body) => {
-                if (!error && (response.statusCode === 200)) {
-                    body = JSON.parse(body);
-                    const item = body.apps.find(item => String(item.app) === String(jsonData.app));
-                    if (item && item.status !== "PROCESSING") {
-                        this.upload_DesktopJs(jsonData);
-                    } else {
-                        if (0 < timeout){
-                            logger.warn(`${msg('kintoneStatus_processing')} retry:${timeout}`);
-                            setTimeout(() => { this.execRun(--timeout); }, RETRY_TIMEOUT_MSEC);
-                        }else{
-                            // リトライタイムアウト。リトライ処理を終了します。
-                            logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
-                            return;
-                        }
+        // HTTP GET
+        return requestPr.get(options).then(response => {
+            
+            let body = response.body,
+                errMsg = null,
+                item = null;
+
+            if (response.statusCode === 200) {
+                item = body.apps.find(item => String(item.app) === String(jsonData.app));
+                if (item && item.status === "PROCESSING") {
+                    if (0 < timeout){
+                        logger.warn(`${msg('kintoneStatus_processing')} retry:${timeout}`);
+                        return new Promise((res,rej) =>{
+                            setTimeout(() => { 
+                                res(this.checkAppReflectionStats(jsonData, --timeout)); 
+                            }, RETRY_TIMEOUT_MSEC);
+                        });
+                    }else{
+                        // リトライタイムアウト。リトライ処理を終了します。
+                        logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
+                        return -1;
                     }
-                } else {
-                        var errMsg = `error: ${consoleJson(error)}\n`;
-                        errMsg += `body: ${consoleJson(body)}\n`;
-                        errMsg += msg('get_kintoneStatusError');
-                        logger.error(errMsg);
-						return;
-                }
-            });
-        } catch (error) {
-            logger.error(error);
-        }
+                } 
+                return 0;
+
+            } else {
+                    errMsg = `error: ${consoleJson(error)}\n`;
+                    errMsg += `body: ${consoleJson(body)}\n`;
+                    errMsg += msg('get_kintoneStatusError');
+                    logger.error(errMsg);
+                    return -1;
+            }
+        }).catch(e => {
+            console.error(e);
+            return -1;
+        });
+
     },
     upload_DesktopJs: function (jsonData = null, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
 
-        try {
+        let options = null,
+            errMsg = null;
 
-            if (jsonData.desktop.js[elmCounter] &&
-                jsonData.desktop.js[elmCounter].type === "FILE" &&
-                jsonData.desktop.js[elmCounter].file &&
-                jsonData.desktop.js[elmCounter].file.fileKey == null) {
+        if (jsonData.desktop.js[elmCounter] &&
+            jsonData.desktop.js[elmCounter].type === "FILE" &&
+            jsonData.desktop.js[elmCounter].file &&
+            jsonData.desktop.js[elmCounter].file.fileKey == null) {
 
-                const request = this.requestWithProxy();
-                const options = { 
-                    url: this.kintoneUrl("/k/v1/file"),
-                    headers: {
-                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
-                    },
-                    formData: createFormData(jsonData.desktop.js[elmCounter].file.name)
-                };
+            options = { 
+                url: this.kintoneUrl("/k/v1/file"),
+                headers: {
+                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+                },
+                formData: createFormData(jsonData.desktop.js[elmCounter].file.name),
+                resolveWithFullResponse: true,
+                json: true
+            };
 
-                if (options.formData) {
-                    const r = request.post(options, (error, response, body) => {
-                        if (!error && (response.statusCode === 200)) {
-                            logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.desktop.js[elmCounter].file.name}`);
-                            jsonData.desktop.js[elmCounter].file.fileKey = JSON.parse(response.body).fileKey;
-                            this.upload_DesktopJs(jsonData, ++elmCounter);
+            if (options.formData) {
+                return requestPr.post(options).then((response) => {
+                    if (response.statusCode === 200) {
+                        logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.desktop.js[elmCounter].file.name}`);
+                        jsonData.desktop.js[elmCounter].file.fileKey = response.body.fileKey;
+                        return this.upload_DesktopJs(jsonData, ++elmCounter);
+                    } else {
+                        if (0 < timeout) {
+                            errMsg = `errorNode: ${consoleJson(jsonData.desktop.js[elmCounter])}\n`;
+                            errMsg += `error: ${consoleJson(error)}\n`;
+                            errMsg += `body: ${consoleJson(body)}\n`;
+                            errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
+                            logger.warn(`${errMsg}`);
+                            return new Promise((res,rej) =>{
+                                setTimeout(() => { 
+                                    res(this.upload_DesktopJs(jsonData, elmCounter, --timeout)); 
+                                }, RETRY_TIMEOUT_MSEC);
+                            });
                         } else {
-                            if (0 < timeout) {
-                                var errMsg = `errorNode: ${consoleJson(jsonData.desktop.js[elmCounter])}\n`;
-                                errMsg += `error: ${consoleJson(error)}\n`;
-                                errMsg += `body: ${consoleJson(body)}\n`;
-                                errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
-                                logger.warn(`${errMsg}`);
-                                setTimeout(() => { this.upload_DesktopJs(jsonData, elmCounter, --timeout); }, RETRY_TIMEOUT_MSEC);
-                            } else {
-                                // リトライタイムアウト。リトライ処理を終了します。
-                                logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
-                                return;
-                            }
+                            // リトライタイムアウト。リトライ処理を終了します。
+                            logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
+                            return -1;
                         }
-                    });
+                    }
+                }).catch(e => {
+                    console.error(e);
+                    return -1;
+                });
 
-                }else{
-                    logger.error(msg('targetfile_NotRead'));
-                    return;
-                }
-            } else if (jsonData.desktop.js[++elmCounter]) {
-                this.upload_DesktopJs(jsonData, elmCounter);
-            } else {
-                this.upload_DesktopCss(jsonData);
+            }else{
+                logger.error(msg('targetfile_NotRead'));
+                return -1;
             }
-        } catch (error) {
-            logger.error(error);
+        } else if (jsonData.desktop.js[++elmCounter]) {
+            return this.upload_DesktopJs(jsonData, elmCounter);
         }
 
+        return 0;
     },
     upload_DesktopCss: function (jsonData, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
 
-        try {
-            if (jsonData.desktop.css[elmCounter] &&
-                jsonData.desktop.css[elmCounter].type === "FILE" &&
-                jsonData.desktop.css[elmCounter].file &&
-                jsonData.desktop.css[elmCounter].file.fileKey == null) {
+        let options = null,
+            errMsg = null;
 
-                const request = this.requestWithProxy();
-                const options = {
-                    url: this.kintoneUrl("/k/v1/file"),
-                    headers: {
-                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
-                    },
-                    formData: createFormData(jsonData.desktop.css[elmCounter].file.name)
-                };
+        if (jsonData.desktop.css[elmCounter] &&
+            jsonData.desktop.css[elmCounter].type === "FILE" &&
+            jsonData.desktop.css[elmCounter].file &&
+            jsonData.desktop.css[elmCounter].file.fileKey == null) {
 
-                if (options.formData) {
-                    const r = request.post(options, (error, response, body) => {
-                        if (!error && (response.statusCode === 200)) {
-                            logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.desktop.css[elmCounter].file.name}`);
-                            jsonData.desktop.css[elmCounter].file.fileKey = JSON.parse(response.body).fileKey;
-                            this.upload_DesktopCss(jsonData, ++elmCounter);
+            options = {
+                url: this.kintoneUrl("/k/v1/file"),
+                headers: {
+                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+                },
+                formData: createFormData(jsonData.desktop.css[elmCounter].file.name),
+                resolveWithFullResponse: true,
+                json: true
+            };
+
+            if (options.formData) {
+                return requestPr.post(options).then(response => {
+                    if (response.statusCode === 200) {
+                        logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.desktop.css[elmCounter].file.name}`);
+                        jsonData.desktop.css[elmCounter].file.fileKey = response.body.fileKey;
+                        return this.upload_DesktopCss(jsonData, ++elmCounter);
+                    } else {
+                        if (0 < timeout) {
+                            errMsg = `error: ${consoleJson(error)}\n`;
+                            errMsg += `body: ${consoleJson(body)}\n`;
+                            errMsg += `errorNode: ${consoleJson(jsonData.desktop.js[elmCounter])}\n`;
+                            errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
+                            logger.warn(errMsg);
+                            return new Promise((res,rej) =>{
+                                setTimeout(() => { 
+                                    res(this.upload_DesktopCss(jsonData, elmCounter, --timeout)); 
+                                }, RETRY_TIMEOUT_MSEC);
+                            });
                         } else {
-                            if (0 < timeout) {
-                                var errMsg = `error: ${consoleJson(error)}\n`;
-                                errMsg += `body: ${consoleJson(body)}\n`;
-                                errMsg += `errorNode: ${consoleJson(jsonData.desktop.js[elmCounter])}\n`;
-                                errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
-                                logger.warn(errMsg);
-                                setTimeout(() => { this.upload_DesktopCss(jsonData, elmCounter, --timeout); }, RETRY_TIMEOUT_MSEC);
-                            } else {
-                                // リトライタイムアウト。リトライ処理を終了します。
-                                logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
-                                return;
-                            }
+                            // リトライタイムアウト。リトライ処理を終了します。
+                            logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
+                            return -1;
                         }
-                    });
-                } else {
-                    logger.error(msg('targetfile_NotRead'));
-                    return;
-                }
-
-            } else if (jsonData.desktop.css[++elmCounter]) {
-                this.upload_DesktopCss(jsonData, elmCounter);
+                    }
+                }).catch(e => {
+                    console.error(e);
+                    return -1;
+                });
             } else {
-                this.upload_MobileJs(jsonData);
+                logger.error(msg('targetfile_NotRead'));
+                return -1;
             }
 
-        } catch (error) {
-            logger.error(error);
+        } else if (jsonData.desktop.css[++elmCounter]) {
+            return this.upload_DesktopCss(jsonData, elmCounter);
         }
+
+        return 0;
     },
     upload_MobileJs: function (jsonData, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
 
-        try {
-            if (jsonData.mobile.js[elmCounter] &&
-                jsonData.mobile.js[elmCounter].type === "FILE" &&
-                jsonData.mobile.js[elmCounter].file &&
-                jsonData.mobile.js[elmCounter].file.fileKey == null) {
+        let options = null,
+            errMsg = null;
 
-                const request = this.requestWithProxy();
-                const options = {
-                    url: this.kintoneUrl("/k/v1/file"),
-                    headers: {
-                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
-                    },
-                    formData: createFormData(jsonData.mobile.js[elmCounter].file.name)
-                };
+        if (jsonData.mobile.js[elmCounter] &&
+            jsonData.mobile.js[elmCounter].type === "FILE" &&
+            jsonData.mobile.js[elmCounter].file &&
+            jsonData.mobile.js[elmCounter].file.fileKey == null) {
 
-                if (options.formData) {
-                    const r = request.post(options, (error, response, body) => {
-                        if (!error && (response.statusCode === 200)) {
-                            logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.mobile.js[elmCounter].file.name}`);
-                            jsonData.mobile.js[elmCounter].file.fileKey = JSON.parse(response.body).fileKey;
-                            this.upload_MobileJs(jsonData, ++elmCounter);
+            options = {
+                url: this.kintoneUrl("/k/v1/file"),
+                headers: {
+                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+                },
+                formData: createFormData(jsonData.mobile.js[elmCounter].file.name),
+                resolveWithFullResponse: true,
+                json: true
+            };
+
+            if (options.formData) {
+                return requestPr.post(options).then(response => {
+                    if (response.statusCode === 200) {
+                        logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.mobile.js[elmCounter].file.name}`);
+                        jsonData.mobile.js[elmCounter].file.fileKey = response.body.fileKey;
+                        return this.upload_MobileJs(jsonData, ++elmCounter);
+                    } else {
+                        if (0 < timeout) {
+                            errMsg = `errorNode: ${consoleJson(jsonData.mobile.js[elmCounter])}\n`;
+                            errMsg += `error: ${consoleJson(error)}\n`;
+                            errMsg += `body: ${consoleJson(body)}\n`;
+                            errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
+                            logger.warn(errMsg);
+                            return new Promise((res,rej) =>{
+                                setTimeout(() => { 
+                                    res(this.upload_MobileJs(jsonData, elmCounter, --timeout)); 
+                                }, RETRY_TIMEOUT_MSEC);
+                            });
                         } else {
-                            if (0 < timeout) {
-                                var errMsg = `errorNode: ${consoleJson(jsonData.mobile.js[elmCounter])}\n`;
-                                errMsg += `error: ${consoleJson(error)}\n`;
-                                errMsg += `body: ${consoleJson(body)}\n`;
-                                errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
-                                logger.warn(errMsg);
-                                setTimeout(() => { this.upload_MobileJs(jsonData, elmCounter, --timeout); }, RETRY_TIMEOUT_MSEC);
-                            } else {
-                                // リトライタイムアウト。リトライ処理を終了します。
-                                logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
-                                return;
-                            }
+                            // リトライタイムアウト。リトライ処理を終了します。
+                            logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
+                            return -1;
                         }
-                    });
-                } else {
-                    logger.error(msg('targetfile_NotRead'));
-                    return;
-                }
-
-            } else if (jsonData.mobile.js[++elmCounter]) {
-                this.upload_MobileJs(jsonData, elmCounter);
+                    }
+                }).catch(e => {
+                    console.error(e);
+                    return -1;
+                });
             } else {
-                this.upload_MobileCss(jsonData);
+                logger.error(msg('targetfile_NotRead'));
+                return -1;
             }
-        } catch (error) {
-            logger.error(error);
+
+        } else if (jsonData.mobile.js[++elmCounter]) {
+            return this.upload_MobileJs(jsonData, elmCounter);
         }
+
+        return 0;
     },
     upload_MobileCss: function (jsonData, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
 
-        try {
-            if (jsonData.mobile.css[elmCounter] &&
-                jsonData.mobile.css[elmCounter].type === "FILE" &&
-                jsonData.mobile.css[elmCounter].file &&
-                jsonData.mobile.css[elmCounter].file.fileKey == null) {
+        let options = null,
+            errMsg = null;
 
-                const request = this.requestWithProxy();
-                const options = {
-                    url: this.kintoneUrl("/k/v1/file"),
-                    headers: {
-                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
-                    },
-                    formData: createFormData(jsonData.mobile.css[elmCounter].file.name)
-                };
+        if (jsonData.mobile.css[elmCounter] &&
+            jsonData.mobile.css[elmCounter].type === "FILE" &&
+            jsonData.mobile.css[elmCounter].file &&
+            jsonData.mobile.css[elmCounter].file.fileKey == null) {
 
-                if (options.formData) {
-                    const r = request.post(options, (error, response, body) => {
-                        if (!error && (response.statusCode === 200)) {
-                            logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.mobile.css[elmCounter].file.name}`);
-                            jsonData.mobile.css[elmCounter].file.fileKey = JSON.parse(response.body).fileKey;
-                            this.upload_MobileCss(jsonData, ++elmCounter);
+            options = {
+                url: this.kintoneUrl("/k/v1/file"),
+                headers: {
+                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+                },
+                formData: createFormData(jsonData.mobile.css[elmCounter].file.name),
+                resolveWithFullResponse: true,
+                json: true
+            };
+
+            if (options.formData) {
+                return requestPr.post(options).then(response => {
+                    if (response.statusCode === 200) {
+                        logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.mobile.css[elmCounter].file.name}`);
+                        jsonData.mobile.css[elmCounter].file.fileKey = response.body.fileKey;
+                        return this.upload_MobileCss(jsonData, ++elmCounter);
+                    } else {
+                        if (0 < timeout) {
+                            errMsg = `errorNode: ${consoleJson(jsonData.mobile.css[elmCounter])}\n`;
+                            errMsg += `error: ${consoleJson(error)}\n`;
+                            errMsg += `body: ${consoleJson(body)}\n`;
+                            errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
+                            logger.warn(errMsg);
+                            return new Promise((res,rej) =>{
+                                setTimeout(() => { 
+                                    res(this.upload_MobileCss(jsonData, elmCounter, --timeout)); 
+                                }, RETRY_TIMEOUT_MSEC);
+                            });
                         } else {
-                            if (0 < timeout) {
-                                var errMsg = `errorNode: ${consoleJson(jsonData.mobile.css[elmCounter])}\n`;
-                                errMsg += `error: ${consoleJson(error)}\n`;
-                                errMsg += `body: ${consoleJson(body)}\n`;
-                                errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
-                                logger.warn(errMsg);
-                                setTimeout(() => { this.upload_MobileCss(jsonData, elmCounter, --timeout); }, RETRY_TIMEOUT_MSEC);
-                            } else {
-                                // リトライタイムアウト。リトライ処理を終了します。
-                                logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
-                                return;
-                            }
+                            // リトライタイムアウト。リトライ処理を終了します。
+                            logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
+                            return -1;
                         }
-                    });
-                } else {
-                    logger.error(msg('targetfile_NotRead'));
-                    return;
-                }
-
-            } else if (jsonData.mobile.css[++elmCounter]) {
-                this.upload_MobileCss(jsonData, elmCounter);
+                    }
+                }).catch(e => {
+                    console.error(e);
+                    return -1;
+                });
             } else {
-                this.chageAppSettings(jsonData);
+                logger.error(msg('targetfile_NotRead'));
+                return -1;
             }
-        } catch (error) {
-            logger.error(error);
+
+        } else if (jsonData.mobile.css[++elmCounter]) {
+            return this.upload_MobileCss(jsonData, elmCounter);
         }
+
+        return 0;
     },
     chageAppSettings: function (jsonData, timeout = RETRY_TIMEOUT_COUNT) {
 
-        try {
-            // 変更反映前、ログ出力
-            logger.info(msg('before_AppSettingChange'));
-            logger.info(consoleJson(jsonData));
+        // 変更反映前、ログ出力
+        logger.info(msg('before_AppSettingChange'));
+        logger.info(consoleJson(jsonData));
 
-            const sendData = deleteJsonKey(deepClone(jsonData));
-
-            const request = this.requestWithProxy();
-            const options = {
+        let sendData = deleteJsonKey(deepClone(jsonData)),
+            options = {
                 url: this.kintoneUrl("/k/v1/preview/app/customize"),
                 headers: {
                     "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(sendData)
-            };
+                body: sendData,
+                resolveWithFullResponse: true,
+                json: true
+            },
+            errMsg = null;
 
-            request.put(options, (error, response, body) => {
-                if (!error && (response.statusCode === 200)) {
-                    // 変更反映後、ログ出力
-                    logger.info(msg('success_AppSettingChange'));
-                    this.deploy(jsonData);
+        return requestPr.put(options).then(response => {
+            if (response.statusCode === 200) {
+                // 変更反映後、ログ出力
+                logger.info(msg('success_AppSettingChange'));
+                return 0;
+            } else {
+                if (0 < timeout) {
+                    errMsg = `body: ${consoleJson(response.body)}\n`;
+                    errMsg += `${msg('change_AppSettingsError')} retry:${timeout}`;
+                    logger.warn(errMsg);
+                    return new Promise((res,rej) =>{
+                        setTimeout(() => { 
+                            res(this.chageAppSettings(jsonData, --timeout)); 
+                        }, RETRY_TIMEOUT_MSEC);
+                    });
                 } else {
-                    if (0 < timeout) {
-                        var errMsg = `error: ${consoleJson(error)}\n`;
-                        errMsg += `body: ${consoleJson(body)}\n`;
-                        errMsg += `${msg('change_AppSettingsError')} retry:${timeout}`;
-                        logger.warn(errMsg);
-                        setTimeout(() => { this.chageAppSettings(jsonData, --timeout); }, RETRY_TIMEOUT_MSEC);
-                    } else {
-                        // リトライタイムアウト。リトライ処理を終了します。
-                        logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
-                        return;
-                    }
+                    // リトライタイムアウト。リトライ処理を終了します。
+                    logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
+                    return -1;
                 }
-            });
-        } catch (error) {
-            logger.error(error);
-        }
+            }
+        }).catch(e => {
+            console.error(e);
+            return -1;
+        });
     },
     deploy: function (jsonData, timeout = RETRY_TIMEOUT_COUNT) {
 
-        try {
-            // 変更反映前、ログ出力
-            logger.info(msg('before_AppDeploy'));
+        // 変更反映前、ログ出力
+        logger.info(msg('before_AppDeploy'));
 
-            const request = this.requestWithProxy();
-            const options = {
+        let options = {
                 url: this.kintoneUrl("/k/v1/preview/app/deploy"),
                 headers: {
                     "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
+                body: {
                     "apps": [{ "app": jsonData.app }]
-                })
-            };
+                },
+                resolveWithFullResponse: true,
+                json: true
+            },
+            errMsg = null;
 
-            request.post(options, (error, response, body) => {
-                if (!error && (response.statusCode === 200)) {
-                    // 変更反映後、ログ出力
-                    logger.info(msg('success_AppDeploy'));
-                    if (mutex.release) mutex.release();
-
+        return requestPr.post(options).then(response => {
+            if (response.statusCode === 200) {
+                // 変更反映後、ログ出力
+                logger.info(msg('success_AppDeploy'));
+                if (mutex.release) mutex.release();
+                return 0;
+            } else {
+                if (0 < timeout) {
+                    errMsg = `body: ${consoleJson(response.body)}\n`;
+                    errMsg += `${msg('deploy_Error')} retry:${timeout}\n`;
+                    logger.warn(errMsg);
+                    return new Promise((res,rej) =>{
+                        setTimeout(() => { 
+                            res(this.deploy(jsonData, --timeout)); 
+                        }, RETRY_TIMEOUT_MSEC);
+                    });
                 } else {
-                    if (0 < timeout) {
-                        var errMsg = `error: ${consoleJson(error)}\n`;
-                        errMsg += `body: ${consoleJson(body)}\n`;
-                        errMsg += `${msg('deploy_Error')} retry:${timeout}\n`;
-                        logger.warn(errMsg);
-                        setTimeout(() => { this.deploy(jsonData, --timeout); }, RETRY_TIMEOUT_MSEC);
-                    } else {
-                        // リトライタイムアウト。リトライ処理を終了します。
-                        logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
-                        return;
-                    }
+                    // リトライタイムアウト。リトライ処理を終了します。
+                    logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
+                    return -1;
                 }
-            });
-        } catch (error) {
-            logger.error(error);
-        }
+            }
+        });
     },
     kintoneUrl: function(_url) {
 
         const url = _url.replace(".json", "");
 
-        if (manifest.json.guest_space_id && Number(manifest.json.guest_space_id) > 0) {
+        if (manifest.json.guest_space_id && parseInt(manifest.json.guest_space_id, 10) > 0) {
             return `https://${this.domain}/k/guest/${manifest.json.guest_space_id}${url.replace("/k", "")}.json`;
         }
         return `https://${this.domain}${url}.json`;
 
     },
-    requestWithProxy: function() {
-        if (this.options.proxyServer) {
-            return request.defaults(
-                { 'proxy': this.options.proxyServer });
-        }
-        return request;
-
-    }
+	getMutex: function(){
+		return mutex;
+	},
 };
 
 const deleteJsonKey = function (jsonData) {
