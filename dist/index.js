@@ -43,7 +43,7 @@ function run(
         .then(() => inquireParams({ username, password, domain, lang }))
         .then(({ username, password, domain }) => {
             if (customSrc){
-                return customizeUpload_run(domain, username, password, customSrc, options);
+                return customizeUpload_run(domain, username, password, customSrc, options).run();
             } else if (portalSrc){
                 return portalUpload_run(domain, username, password, portalSrc, options);
             } else if (pluginPath){

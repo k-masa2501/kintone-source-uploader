@@ -34,8 +34,10 @@
         "report-dir": "./coverage"
     },
     "dependencies": {
+        "axios": "^0.21.1",
         "btoa": "^1.2.1",
         "chalk": "^2.4.1",
+        "form-data": "^2.3.3",
         "fs": "0.0.1-security",
         "inquirer": "^6.5.2",
         "jsonschema": "^1.4.0",
@@ -43,7 +45,7 @@
         "os": "^0.1.1",
         "os-locale": "^3.0.1",
         "puppeteer": "^1.20.0",
-        "request-promise": "^4.2.6"
+        "qs": "^6.5.2"
     },
     "devDependencies": {
         "@types/mocha": "^8.2.0",

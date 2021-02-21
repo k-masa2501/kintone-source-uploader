@@ -4,10 +4,12 @@
 
 "use strict";
 
+const axios = require('axios');
+const Qs = require('qs');
+const formdata = require('form-data');
 const path = require('path');
 const fs = require('fs');
 const messages_1 = require("./messages");
-let requestPr = require("request-promise");
 const btoa = require('btoa');
 const { Validator } = require('jsonschema');
 const { Semaphore } = require('./semaphore');
@@ -15,6 +17,7 @@ const  os = require('os');
 const mutex = { obj: new Semaphore(1, 2), release: null};
 const RETRY_TIMEOUT_MSEC = 3000;
 const RETRY_TIMEOUT_COUNT = 3;
+var msg = null;
 //msec
 
 String.prototype.pathReplace = function(){
@@ -28,48 +31,85 @@ String.prototype.pathReplace = function(){
 }
 
 const controller = function(domain, username, password, manifestFile, options) {
+
     this.domain = domain;
     this.username = username;
     this.password = password;
     this.options = options;
+    this.proxy = null;
 
     // マニフェストロード
     if (!manifest.load(manifestFile)) {
-        logger.warn(`${msg('Interrupt_ManifestJsonParse')}`);
-        process.exit(1);
-    }
-
-    // use proxy
-    if (this.options.proxyServer) {
-        requestPr =  requestPr.defaults(
-            { 'proxy': this.options.proxyServer });
-    }
-
-    // ソースコードアップロード
-    this.execUploadRun();
-
-    // ファイル変更監視
-    if (options.watch){
-        let startTime = null;
-        fs.watch(manifest.path, { persistent: true, recursive: true }, (eventType, targetFilePath) => {
-            // 前回からの処理時間が100ミリ未満の場合、同一ファイルの変更とみなして処理しない。
-            if (!startTime || 100 < (Date.now() - startTime)){
-                if (eventType === 'change') {
-                    ((result) => {
-                        if (result) {
-                            this.execUploadRun();
-                        }
-                    })(this.checkNeedToSourceUpload(targetFilePath));
-                }
-            }
-            
-            // 計測開始
-            startTime = Date.now();
-        });
+        logger.error(`${msg('Interrupt_ManifestJsonParse')}`)
+        throw new Error(`${msg('Interrupt_ManifestJsonParse')}`);
     }
 };
 
 controller.prototype = {
+    run: function(){
+
+        // ソースコードアップロード
+        this.uploadRun();
+
+        // ファイル変更監視
+        if (this.options.watch){
+            let startTime = null;
+            fs.watch(manifest.path, { persistent: true, recursive: true }, (eventType, targetFilePath) => {
+                // 前回からの処理時間が100ミリ未満の場合、同一ファイルの変更とみなして処理しない。
+                if (!startTime || 100 < (Date.now() - startTime)){
+                    if (eventType === 'change') {
+                        ((result) => {
+                            if (result) {
+                                this.uploadRun();
+                            }
+                        })(this.checkNeedToSourceUpload(targetFilePath));
+                    }
+                }
+
+                // 計測開始
+                startTime = Date.now();
+            });
+        }
+    },
+    uploadRun: function () {
+        return mutex.obj.acquire()
+        .then(
+            async release => {
+        
+                let jsonData = deepClone(manifest.json);
+
+                // get mutex release
+                mutex.release = release;
+
+                if (0 !== await this.checkAppReflectionStats(jsonData)){
+                    return -1;
+                }
+
+                if (0 !== await this.upload_DesktopJs(jsonData)){
+                    return -1;
+                }
+
+                if (0 !== await this.upload_DesktopCss(jsonData)){
+                    return -1;
+                }
+
+                if (0 !== await this.upload_MobileJs(jsonData)){
+                    return -1;
+                }
+
+                if (0 !== await this.upload_MobileCss(jsonData)){
+                    return -1;
+                }
+
+                if (0 !== await this.chageAppSettings(jsonData)){
+                    return -1;
+                }
+
+                return await this.deploy(jsonData);
+            }
+        )
+        .catch(e => console.warn(`warn: ${e.message}`));
+    },
     checkNeedToSourceUpload: function(targetFilePath) {
         if (manifest.fileName === targetFilePath){
             if (!manifest.reload()){
@@ -112,129 +152,95 @@ controller.prototype = {
         }
         return false;
     },
-    execUploadRun: function () {
-        return mutex.obj.acquire()
-        .then(
-            async release => {
-        
-                let jsonData = deepClone(manifest.json);
-
-                // get mutex release
-                mutex.release = release;
-
-                if (0 !== await this.checkAppReflectionStats(jsonData)){
-                    return;
-                }
-
-                if (0 !== await this.upload_DesktopJs(jsonData)){
-                    return;
-                }
-
-                if (0 !== await this.upload_DesktopCss(jsonData)){
-                    return;
-                }
-
-                if (0 !== await this.upload_MobileJs(jsonData)){
-                    return;
-                }
-
-                if (0 !== await this.upload_MobileCss(jsonData)){
-                    return;
-                }
-
-                if (0 !== await this.chageAppSettings(jsonData)){
-                    return;
-                }
-
-                await this.deploy(jsonData);
-
-                return;
-            }
-        )
-        .catch(e => console.warn(`warn: ${e.message}`));
-    },
     checkAppReflectionStats: async function (jsonData, timeout = RETRY_TIMEOUT_COUNT) {
 
         let options = {
-                uri: this.kintoneUrl("/k/v1/preview/app/deploy"),
-                headers: {
-                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
-                    "Content-Type": "application/json"
-                },
-                body: { "apps": [jsonData.app] },
-                resolveWithFullResponse: true,
-                json: true
-            };
+            headers: {
+                "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
+            },
+            params: {
+                 apps: [jsonData.app] 
+            },
+            paramsSerializer: function (params) {
+                return Qs.stringify(params)
+            },
+            responseType: 'json',
+            proxy: analysisProxyStr(this.options.proxyServer)
+        };
 
-        // HTTP GET
-        return requestPr.get(options).then(response => {
-            
-            let body = response.body,
+        return axios.get(this.kintoneUrl("/k/v1/preview/app/deploy"), options)
+        .then((response) => {
+
+            let body = response.data,
                 errMsg = null,
                 item = null;
 
-            if (response.statusCode === 200) {
+            if (response.status === 200) {
                 item = body.apps.find(item => String(item.app) === String(jsonData.app));
                 if (item && item.status === "PROCESSING") {
-                    if (0 < timeout){
+                    if (0 < timeout) {
                         logger.warn(`${msg('kintoneStatus_processing')} retry:${timeout}`);
-                        return new Promise((res,rej) =>{
-                            setTimeout(() => { 
-                                res(this.checkAppReflectionStats(jsonData, --timeout)); 
+                        return new Promise((res, rej) => {
+                            setTimeout(() => {
+                                res(this.checkAppReflectionStats(jsonData, --timeout));
                             }, RETRY_TIMEOUT_MSEC);
                         });
-                    }else{
+                    } else {
                         // リトライタイムアウト。リトライ処理を終了します。
                         logger.error(`${msg('retry_Timeout')}  retry:${timeout}`);
                         return -1;
                     }
-                } 
+                }
+
                 return 0;
 
             } else {
-                    errMsg = `error: ${consoleJson(error)}\n`;
-                    errMsg += `body: ${consoleJson(body)}\n`;
-                    errMsg += msg('get_kintoneStatusError');
-                    logger.error(errMsg);
-                    return -1;
+                errMsg = `error: ${consoleJson(error)}\n`;
+                errMsg += `body: ${consoleJson(body)}\n`;
+                errMsg += msg('get_kintoneStatusError');
+                logger.error(errMsg);
+                return -1;
             }
+
         }).catch(e => {
-            console.error(e);
+            console.error(e.message);
             return -1;
         });
-
     },
     upload_DesktopJs: function (jsonData = null, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
 
         let options = null,
-            errMsg = null;
+            errMsg = null,
+            form = null;
 
         if (jsonData.desktop.js[elmCounter] &&
             jsonData.desktop.js[elmCounter].type === "FILE" &&
             jsonData.desktop.js[elmCounter].file &&
             jsonData.desktop.js[elmCounter].file.fileKey == null) {
 
-            options = { 
-                url: this.kintoneUrl("/k/v1/file"),
-                headers: {
-                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
-                },
-                formData: createFormData(jsonData.desktop.js[elmCounter].file.name),
-                resolveWithFullResponse: true,
-                json: true
-            };
+            // create form
+            form = createFormDataN(jsonData.desktop.js[elmCounter].file.name);
 
-            if (options.formData) {
-                return requestPr.post(options).then((response) => {
-                    if (response.statusCode === 200) {
+            if (form) {
+
+                options = {
+                    headers: {
+                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
+                        'Content-Type': form.getHeaders()['content-type']
+                    },
+                    responseType: 'json',
+                    proxy: analysisProxyStr(this.options.proxyServer)
+                };
+
+                return axios.post(this.kintoneUrl("/k/v1/file"), form, options).then(response => {
+                    if (response.status === 200) {
                         logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.desktop.js[elmCounter].file.name}`);
-                        jsonData.desktop.js[elmCounter].file.fileKey = response.body.fileKey;
+                        jsonData.desktop.js[elmCounter].file.fileKey = response.data.fileKey;
                         return this.upload_DesktopJs(jsonData, ++elmCounter);
                     } else {
                         if (0 < timeout) {
                             errMsg = `errorNode: ${consoleJson(jsonData.desktop.js[elmCounter])}\n`;
-                            errMsg += `error: ${consoleJson(error)}\n`;
-                            errMsg += `body: ${consoleJson(body)}\n`;
+                            errMsg += `body: ${consoleJson(response.data)}\n`;
                             errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
                             logger.warn(`${errMsg}`);
                             return new Promise((res,rej) =>{
@@ -266,33 +272,35 @@ controller.prototype = {
     upload_DesktopCss: function (jsonData, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
 
         let options = null,
-            errMsg = null;
+            errMsg = null,
+            form = null;
 
         if (jsonData.desktop.css[elmCounter] &&
             jsonData.desktop.css[elmCounter].type === "FILE" &&
             jsonData.desktop.css[elmCounter].file &&
             jsonData.desktop.css[elmCounter].file.fileKey == null) {
 
-            options = {
-                url: this.kintoneUrl("/k/v1/file"),
-                headers: {
-                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
-                },
-                formData: createFormData(jsonData.desktop.css[elmCounter].file.name),
-                resolveWithFullResponse: true,
-                json: true
-            };
+            // create form
+            form = createFormDataN(jsonData.desktop.css[elmCounter].file.name);
 
-            if (options.formData) {
-                return requestPr.post(options).then(response => {
-                    if (response.statusCode === 200) {
+            if (form) {
+                options = {
+                    headers: {
+                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
+                        'Content-Type': form.getHeaders()['content-type']
+                    },
+                    responseType: 'json',
+                    proxy: analysisProxyStr(this.options.proxyServer)
+                };
+
+                return axios.post(this.kintoneUrl("/k/v1/file"), form, options).then(response => {
+                    if (response.status === 200) {
                         logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.desktop.css[elmCounter].file.name}`);
-                        jsonData.desktop.css[elmCounter].file.fileKey = response.body.fileKey;
+                        jsonData.desktop.css[elmCounter].file.fileKey = response.data.fileKey;
                         return this.upload_DesktopCss(jsonData, ++elmCounter);
                     } else {
                         if (0 < timeout) {
-                            errMsg = `error: ${consoleJson(error)}\n`;
-                            errMsg += `body: ${consoleJson(body)}\n`;
+                            errMsg += `body: ${consoleJson(response.data)}\n`;
                             errMsg += `errorNode: ${consoleJson(jsonData.desktop.js[elmCounter])}\n`;
                             errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
                             logger.warn(errMsg);
@@ -325,34 +333,36 @@ controller.prototype = {
     upload_MobileJs: function (jsonData, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
 
         let options = null,
-            errMsg = null;
+            errMsg = null,
+            form = null;
 
         if (jsonData.mobile.js[elmCounter] &&
             jsonData.mobile.js[elmCounter].type === "FILE" &&
             jsonData.mobile.js[elmCounter].file &&
             jsonData.mobile.js[elmCounter].file.fileKey == null) {
 
-            options = {
-                url: this.kintoneUrl("/k/v1/file"),
-                headers: {
-                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
-                },
-                formData: createFormData(jsonData.mobile.js[elmCounter].file.name),
-                resolveWithFullResponse: true,
-                json: true
-            };
+            // create form
+            form = createFormDataN(jsonData.mobile.js[elmCounter].file.name);
 
-            if (options.formData) {
-                return requestPr.post(options).then(response => {
-                    if (response.statusCode === 200) {
+            if (form) {
+                options = {
+                    headers: {
+                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
+                        'Content-Type': form.getHeaders()['content-type']
+                    },
+                    responseType: 'json',
+                    proxy: analysisProxyStr(this.options.proxyServer)
+                };
+
+                return axios.post(this.kintoneUrl("/k/v1/file"), form, options).then(response => {
+                    if (response.status === 200) {
                         logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.mobile.js[elmCounter].file.name}`);
-                        jsonData.mobile.js[elmCounter].file.fileKey = response.body.fileKey;
+                        jsonData.mobile.js[elmCounter].file.fileKey = response.data.fileKey;
                         return this.upload_MobileJs(jsonData, ++elmCounter);
                     } else {
                         if (0 < timeout) {
                             errMsg = `errorNode: ${consoleJson(jsonData.mobile.js[elmCounter])}\n`;
-                            errMsg += `error: ${consoleJson(error)}\n`;
-                            errMsg += `body: ${consoleJson(body)}\n`;
+                            errMsg += `body: ${consoleJson(response.data)}\n`;
                             errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
                             logger.warn(errMsg);
                             return new Promise((res,rej) =>{
@@ -384,34 +394,36 @@ controller.prototype = {
     upload_MobileCss: function (jsonData, elmCounter = 0, timeout = RETRY_TIMEOUT_COUNT) {
 
         let options = null,
-            errMsg = null;
+            errMsg = null,
+            form = null;
 
         if (jsonData.mobile.css[elmCounter] &&
             jsonData.mobile.css[elmCounter].type === "FILE" &&
             jsonData.mobile.css[elmCounter].file &&
             jsonData.mobile.css[elmCounter].file.fileKey == null) {
 
-            options = {
-                url: this.kintoneUrl("/k/v1/file"),
-                headers: {
-                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
-                },
-                formData: createFormData(jsonData.mobile.css[elmCounter].file.name),
-                resolveWithFullResponse: true,
-                json: true
-            };
+            // create form
+            form = createFormDataN(jsonData.mobile.css[elmCounter].file.name);
 
-            if (options.formData) {
-                return requestPr.post(options).then(response => {
-                    if (response.statusCode === 200) {
+            if (form) {
+                options = {
+                    headers: {
+                        "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
+                        'Content-Type': form.getHeaders()['content-type']
+                    },
+                    responseType: 'json',
+                    proxy: analysisProxyStr(this.options.proxyServer)
+                };
+
+                return axios.post(this.kintoneUrl("/k/v1/file"), form, options).then(response => {
+                    if (response.status === 200) {
                         logger.info(`${msg('Manifest_fileUploadSuccess')}  file: ${jsonData.mobile.css[elmCounter].file.name}`);
-                        jsonData.mobile.css[elmCounter].file.fileKey = response.body.fileKey;
+                        jsonData.mobile.css[elmCounter].file.fileKey = response.data.fileKey;
                         return this.upload_MobileCss(jsonData, ++elmCounter);
                     } else {
                         if (0 < timeout) {
                             errMsg = `errorNode: ${consoleJson(jsonData.mobile.css[elmCounter])}\n`;
-                            errMsg += `error: ${consoleJson(error)}\n`;
-                            errMsg += `body: ${consoleJson(body)}\n`;
+                            errMsg += `body: ${consoleJson(response.data)}\n`;
                             errMsg += `${msg('Manifest_fileUploadError')} retry:${timeout}`;
                             logger.warn(errMsg);
                             return new Promise((res,rej) =>{
@@ -448,25 +460,22 @@ controller.prototype = {
 
         let sendData = deleteJsonKey(deepClone(jsonData)),
             options = {
-                url: this.kintoneUrl("/k/v1/preview/app/customize"),
                 headers: {
-                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
-                    "Content-Type": "application/json"
+                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
                 },
-                body: sendData,
-                resolveWithFullResponse: true,
-                json: true
+                responseType: 'json',
+                proxy: analysisProxyStr(this.options.proxyServer)
             },
             errMsg = null;
 
-        return requestPr.put(options).then(response => {
-            if (response.statusCode === 200) {
+        return axios.put(this.kintoneUrl("/k/v1/preview/app/customize"), sendData, options).then(response => {
+            if (response.status === 200) {
                 // 変更反映後、ログ出力
                 logger.info(msg('success_AppSettingChange'));
                 return 0;
             } else {
                 if (0 < timeout) {
-                    errMsg = `body: ${consoleJson(response.body)}\n`;
+                    errMsg = `body: ${consoleJson(response.data)}\n`;
                     errMsg += `${msg('change_AppSettingsError')} retry:${timeout}`;
                     logger.warn(errMsg);
                     return new Promise((res,rej) =>{
@@ -491,28 +500,24 @@ controller.prototype = {
         logger.info(msg('before_AppDeploy'));
 
         let options = {
-                url: this.kintoneUrl("/k/v1/preview/app/deploy"),
                 headers: {
-                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
-                    "Content-Type": "application/json"
+                    "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
                 },
-                body: {
-                    "apps": [{ "app": jsonData.app }]
-                },
-                resolveWithFullResponse: true,
-                json: true
+                responseType: 'json',
+                proxy: analysisProxyStr(this.options.proxyServer)
             },
-            errMsg = null;
+            errMsg = null,
+            sendData = { "apps": [{ "app": jsonData.app }]};
 
-        return requestPr.post(options).then(response => {
-            if (response.statusCode === 200) {
+        return axios.post(this.kintoneUrl("/k/v1/preview/app/deploy"), sendData, options).then(response => {
+            if (response.status === 200) {
                 // 変更反映後、ログ出力
                 logger.info(msg('success_AppDeploy'));
                 if (mutex.release) mutex.release();
                 return 0;
             } else {
                 if (0 < timeout) {
-                    errMsg = `body: ${consoleJson(response.body)}\n`;
+                    errMsg = `body: ${consoleJson(response.data)}\n`;
                     errMsg += `${msg('deploy_Error')} retry:${timeout}\n`;
                     logger.warn(errMsg);
                     return new Promise((res,rej) =>{
@@ -526,6 +531,9 @@ controller.prototype = {
                     return -1;
                 }
             }
+        }).catch(e => {
+            console.error(e);
+            return -1;
         });
     },
     kintoneUrl: function(_url) {
@@ -537,11 +545,31 @@ controller.prototype = {
         }
         return `https://${this.domain}${url}.json`;
 
-    },
-	getMutex: function(){
-		return mutex;
-	},
+    }
 };
+
+const analysisProxyStr = function(proxy){
+
+    var match = null,
+        obj = null;
+
+    if (!proxy){
+        return obj;
+    }
+
+    // 0:"full", 1:http or https, 2;"user:pass@", 3:"user", 4:"pass", 5:"proxyAddr", 6:":proxyPort", 7:"proxyPort"
+    match = proxy.match(/^(http|https):\/\/(([A-Za-z0-9\.@]+):*([A-Za-z0-9]*)@)*([A-Za-z0-9\.]*)(:([0-9]*$))*/);
+    if (match){
+        obj = {};
+        obj.protocol = match[1];
+        obj.auth.username = match[3];
+        obj.auth.password = match[4];
+        obj.host = match[5];
+        obj.port = match[7];
+    }
+
+    return obj;
+}
 
 const deleteJsonKey = function (jsonData) {
     delete jsonData.guest_space_id;
@@ -577,26 +605,14 @@ const deleteJsonKey = function (jsonData) {
     return jsonData;
 }
 
-const createFormData = function(filePath){
-
-    const target = path.join(manifest.path, filePath);
-    var stream = null;
-
-    try {
-        fs.statSync(target);
-        stream = fs.createReadStream(target);
-        return {
-            name: path.basename(filePath),
-            file: {
-                value: stream,
-                options: {
-                    filename: path.basename(filePath),
-                    contentType: 'text/plain'
-                }
-            }
-        }
-    } catch (e) {
-        logger.warn(`${msg('targetSrc_ReadError')}, e:${e}`);
+const createFormDataN = function(filePath){
+    try{
+        let form = new formdata(),
+            targetFile = path.join(manifest.path, filePath);  
+        form.append('file', fs.readFileSync(targetFile), path.basename(targetFile));
+        return form;
+    }catch(e){
+        console.error(e.message);
         return null;
     }
 }
@@ -624,7 +640,7 @@ const manifest = {
             return true;
         }catch(e){
             logger.error(e);
-            process.exit(1);
+            return false;
         }
     },
     load: (file) => {
@@ -634,14 +650,14 @@ const manifest = {
             fs.statSync(file);
         } catch (e) {
             logger.error(`${msg('Manifest_DoesNotExist')}, e:${e}`);
-            process.exit(1);
+            return null;
         }
 
         try {
             json = fs.readFileSync(file, { encoding: "utf-8" });
         } catch (e) {
             logger.error(`${msg('Manifest_ErrorLoading')}, e:${e}`);
-            process.exit(1);
+            return null;
         }
 
         try {
@@ -778,11 +794,8 @@ const consoleJson = function(msg){
     }, ' ');
 }
 
-var msg = null;
-const run = (domain, username, password, manifestFile, options) => {
+module.exports.customizeUpload_run = (domain, username, password, manifestFile, options) => {
     const { lang } = options;
     msg = messages_1.getBoundMessage(lang);
     return new controller(domain, username, password, manifestFile, options);
 };
-
-module.exports.customizeUpload_run = run;
