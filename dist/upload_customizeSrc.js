@@ -5,6 +5,7 @@
 "use strict";
 
 const axios = require('axios');
+const httpsProxyAgent = require('https-proxy-agent');
 const Qs = require('qs');
 const formdata = require('form-data');
 const path = require('path');
@@ -108,7 +109,7 @@ controller.prototype = {
                 return await this.deploy(jsonData);
             }
         )
-        .catch(e => console.warn(`warn: ${e.message}`));
+        .catch(e => logger.warn(`warn: ${e.message}`));
     },
     checkNeedToSourceUpload: function(targetFilePath) {
         if (manifest.fileName === targetFilePath){
@@ -164,9 +165,12 @@ controller.prototype = {
             paramsSerializer: function (params) {
                 return Qs.stringify(params)
             },
-            responseType: 'json',
-            proxy: analysisProxyStr(this.options.proxyServer)
+            responseType: 'json'
         };
+
+        if (this.options.proxyServer){
+            options.httpsAgent = new httpsProxyAgent(this.options.proxyServer);
+        }
 
         return axios.get(this.kintoneUrl("/k/v1/preview/app/deploy"), options)
         .then((response) => {
@@ -203,7 +207,7 @@ controller.prototype = {
             }
 
         }).catch(e => {
-            console.error(e.message);
+            logger.error(e);
             return -1;
         });
     },
@@ -228,9 +232,12 @@ controller.prototype = {
                         "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                         'Content-Type': form.getHeaders()['content-type']
                     },
-                    responseType: 'json',
-                    proxy: analysisProxyStr(this.options.proxyServer)
+                    responseType: 'json'
                 };
+
+                if (this.options.proxyServer){
+                    options.httpsAgent = new httpsProxyAgent(this.options.proxyServer);
+                }
 
                 return axios.post(this.kintoneUrl("/k/v1/file"), form, options).then(response => {
                     if (response.status === 200) {
@@ -255,7 +262,7 @@ controller.prototype = {
                         }
                     }
                 }).catch(e => {
-                    console.error(e);
+                    logger.error(e);
                     return -1;
                 });
 
@@ -289,9 +296,12 @@ controller.prototype = {
                         "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                         'Content-Type': form.getHeaders()['content-type']
                     },
-                    responseType: 'json',
-                    proxy: analysisProxyStr(this.options.proxyServer)
+                    responseType: 'json'
                 };
+
+                if (this.options.proxyServer){
+                    options.httpsAgent = new httpsProxyAgent(this.options.proxyServer);
+                }
 
                 return axios.post(this.kintoneUrl("/k/v1/file"), form, options).then(response => {
                     if (response.status === 200) {
@@ -316,7 +326,7 @@ controller.prototype = {
                         }
                     }
                 }).catch(e => {
-                    console.error(e);
+                    logger.error(e);
                     return -1;
                 });
             } else {
@@ -350,9 +360,12 @@ controller.prototype = {
                         "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                         'Content-Type': form.getHeaders()['content-type']
                     },
-                    responseType: 'json',
-                    proxy: analysisProxyStr(this.options.proxyServer)
+                    responseType: 'json'
                 };
+
+                if (this.options.proxyServer){
+                    options.httpsAgent = new httpsProxyAgent(this.options.proxyServer);
+                }
 
                 return axios.post(this.kintoneUrl("/k/v1/file"), form, options).then(response => {
                     if (response.status === 200) {
@@ -377,7 +390,7 @@ controller.prototype = {
                         }
                     }
                 }).catch(e => {
-                    console.error(e);
+                    logger.error(e);
                     return -1;
                 });
             } else {
@@ -411,9 +424,12 @@ controller.prototype = {
                         "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`),
                         'Content-Type': form.getHeaders()['content-type']
                     },
-                    responseType: 'json',
-                    proxy: analysisProxyStr(this.options.proxyServer)
+                    responseType: 'json'
                 };
+
+                if (this.options.proxyServer){
+                    options.httpsAgent = new httpsProxyAgent(this.options.proxyServer);
+                }
 
                 return axios.post(this.kintoneUrl("/k/v1/file"), form, options).then(response => {
                     if (response.status === 200) {
@@ -438,7 +454,7 @@ controller.prototype = {
                         }
                     }
                 }).catch(e => {
-                    console.error(e);
+                    logger.error(e);
                     return -1;
                 });
             } else {
@@ -463,10 +479,13 @@ controller.prototype = {
                 headers: {
                     "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
                 },
-                responseType: 'json',
-                proxy: analysisProxyStr(this.options.proxyServer)
+                responseType: 'json'
             },
             errMsg = null;
+
+        if (this.options.proxyServer){
+            options.httpsAgent = new httpsProxyAgent(this.options.proxyServer);
+        }
 
         return axios.put(this.kintoneUrl("/k/v1/preview/app/customize"), sendData, options).then(response => {
             if (response.status === 200) {
@@ -490,7 +509,7 @@ controller.prototype = {
                 }
             }
         }).catch(e => {
-            console.error(e);
+            logger.error(e);
             return -1;
         });
     },
@@ -503,11 +522,14 @@ controller.prototype = {
                 headers: {
                     "X-Cybozu-Authorization": Base64.encode(`${this.username}:${this.password}`)
                 },
-                responseType: 'json',
-                proxy: analysisProxyStr(this.options.proxyServer)
+                responseType: 'json'
             },
             errMsg = null,
             sendData = { "apps": [{ "app": jsonData.app }]};
+
+        if (this.options.proxyServer){
+            options.httpsAgent = new httpsProxyAgent(this.options.proxyServer);
+        }
 
         return axios.post(this.kintoneUrl("/k/v1/preview/app/deploy"), sendData, options).then(response => {
             if (response.status === 200) {
@@ -532,7 +554,7 @@ controller.prototype = {
                 }
             }
         }).catch(e => {
-            console.error(e);
+            logger.error(e);
             return -1;
         });
     },
@@ -547,29 +569,6 @@ controller.prototype = {
 
     }
 };
-
-const analysisProxyStr = function(proxy){
-
-    var match = null,
-        obj = null;
-
-    if (!proxy){
-        return obj;
-    }
-
-    // 0:"full", 1:http or https, 2;"user:pass@", 3:"user", 4:"pass", 5:"proxyAddr", 6:":proxyPort", 7:"proxyPort"
-    match = proxy.match(/^(http|https):\/\/(([A-Za-z0-9\.@]+):*([A-Za-z0-9]*)@)*([A-Za-z0-9\.]*)(:([0-9]*$))*/);
-    if (match){
-        obj = {};
-        obj.protocol = match[1];
-        obj.auth.username = match[3];
-        obj.auth.password = match[4];
-        obj.host = match[5];
-        obj.port = match[7];
-    }
-
-    return obj;
-}
 
 const deleteJsonKey = function (jsonData) {
     delete jsonData.guest_space_id;
@@ -612,7 +611,7 @@ const createFormDataN = function(filePath){
         form.append('file', fs.readFileSync(targetFile), path.basename(targetFile));
         return form;
     }catch(e){
-        console.error(e.message);
+        logger.error(e.message);
         return null;
     }
 }
