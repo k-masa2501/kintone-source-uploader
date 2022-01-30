@@ -15,7 +15,7 @@ const btoa = require('btoa');
 const { Validator } = require('jsonschema');
 const { Semaphore } = require('./semaphore');
 const  os = require('os');
-const mutex = { obj: new Semaphore(1, 2), release: null};
+const mutex = { obj: new Semaphore(1, 1), release: null};
 const RETRY_TIMEOUT_MSEC = 3000;
 const RETRY_TIMEOUT_COUNT = 3;
 var msg = null;
@@ -77,7 +77,8 @@ controller.prototype = {
         .then(
             async release => {
         
-                let jsonData = deepClone(manifest.json);
+                let jsonData = deepClone(manifest.json),
+                    results = null;
 
                 // get mutex release
                 mutex.release = release;
@@ -86,20 +87,17 @@ controller.prototype = {
                     return -1;
                 }
 
-                if (0 !== await this.upload_DesktopJs(jsonData)){
-                    return -1;
-                }
+                results = await Promise.all([
+                    this.upload_DesktopJs(jsonData),
+                    this.upload_DesktopCss(jsonData),
+                    this.upload_MobileJs(jsonData),
+                    this.upload_MobileCss(jsonData)
+                ]);
 
-                if (0 !== await this.upload_DesktopCss(jsonData)){
-                    return -1;
-                }
-
-                if (0 !== await this.upload_MobileJs(jsonData)){
-                    return -1;
-                }
-
-                if (0 !== await this.upload_MobileCss(jsonData)){
-                    return -1;
+                for (let i1 = 0, len1 = results.length; i1 < len1; i1++){
+                    if (0 !== results[i1]){
+                        return -1;
+                    }
                 }
 
                 if (0 !== await this.chageAppSettings(jsonData)){
