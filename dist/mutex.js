@@ -5,10 +5,11 @@
     https://github.com/notenoughneon/await-semaphore
 */
 "use strict";
-const semaphore_1 = require("./semaphore");
-class Mutex extends semaphore_1.Semaphore {
+import Semaphore from "./semaphore";
+class Mutex extends Semaphore {
     constructor() {
         super(1, -1);
     }
 }
-exports.Mutex = Mutex;
+
+export default { Mutex };

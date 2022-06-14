@@ -4,11 +4,10 @@
 
 "use strict";
 
-const { inquireParams } = require("../dist/params");
-const { customizeUpload_run } = require("../dist/upload_customizeSrc");
-const { portalUpload_run } = require("../dist/upload_portalSrc");
-const { pluginUpload_run } = require("../dist/upload_plugin");
-const { getMessage } = require("../dist/messages");
+import { inquireParams } from "../dist/params.js";
+import  customizeUpload_run  from "../dist/upload_customizeSrc.js";
+import { portalUpload_run } from "../dist/upload_portalSrc.js";
+import { pluginUpload_run } from "../dist/upload_plugin.js";
 
 function run(
     {
@@ -54,4 +53,4 @@ function run(
         });
 }
 
-exports.run = run;
+export  { run };

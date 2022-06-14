@@ -14,11 +14,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const chalk_1 = __importDefault(require("chalk"));
-const fs_1 = __importDefault(require("fs"));
-const puppeteer_1 = __importDefault(require("puppeteer"));
-const messages_1 = require("./messages");
+import _chalk_ from "chalk";
+const chalk_1 = __importDefault(_chalk_);
+import _fs_ from "fs";
+const fs_1 = __importDefault(_fs_);
+import _puppeteer_ from "puppeteer";
+const puppeteer_1 = __importDefault(_puppeteer_);
+import { getBoundMessage}  from "./messages.js";
+const messages_1 = { getBoundMessage };
 const TIMEOUT_MS = 30000;
 var proxyUserId = null;
 var proxyPasswd = null;
@@ -179,4 +182,6 @@ function run(domain, userName, password, pluginPath, options) {
         }
     });
 }
-exports.pluginUpload_run = run;
+
+const pluginUpload_run = run;
+export { pluginUpload_run };

@@ -4,17 +4,17 @@
 
 "use strict";
 
-const axios = require('axios');
-const httpsProxyAgent = require('https-proxy-agent');
-const Qs = require('qs');
-const formdata = require('form-data');
-const path = require('path');
-const fs = require('fs');
-const messages_1 = require("./messages");
-const btoa = require('btoa');
-const { Validator } = require('jsonschema');
-const { Semaphore } = require('./semaphore');
-const  os = require('os');
+import axios from 'axios';
+import httpsProxyAgent from 'https-proxy-agent';
+import Qs from 'qs';
+import formdata from 'form-data';
+import path from 'path';
+import fs from 'fs';
+import { getBoundMessage} from "./messages.js";
+import btoa from 'btoa';
+import { Validator } from 'jsonschema';
+import  Semaphore  from './semaphore.js';
+import  os from 'os';
 const mutex = { obj: new Semaphore(1, 1), release: null};
 const RETRY_TIMEOUT_MSEC = 3000;
 const RETRY_TIMEOUT_COUNT = 3;
@@ -791,8 +791,8 @@ const consoleJson = function(msg){
     }, ' ');
 }
 
-module.exports.customizeUpload_run = (domain, username, password, manifestFile, options) => {
+export default  (domain, username, password, manifestFile, options) => {
     const { lang } = options;
-    msg = messages_1.getBoundMessage(lang);
+    msg = getBoundMessage(lang);
     return new controller(domain, username, password, manifestFile, options);
-};
+}

@@ -3,7 +3,6 @@
 // https://github.com/kintone/plugin-uploader/blob/master/LICENSE
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const messages = {
     Q_Domain: {
         en: "Input your Kintone subdomain (example.cybozu.com):",
@@ -142,7 +141,7 @@ const messages = {
 function getMessage(lang, key) {
     return messages[key][lang];
 }
-exports.getMessage = getMessage;
+
 /**
  * Returns a function bound lang to getMessage
  * @param lang
@@ -150,4 +149,5 @@ exports.getMessage = getMessage;
 function getBoundMessage(lang) {
     return getMessage.bind(null, lang);
 }
-exports.getBoundMessage = getBoundMessage;
+
+export { getMessage, getBoundMessage }

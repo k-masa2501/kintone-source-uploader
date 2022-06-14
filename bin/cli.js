@@ -5,10 +5,10 @@
 
 "use strict";
 
-const osLocale = require("os-locale");
-const meow = require("meow");
-const { run } = require("../dist/index");
-const { getDefaultLang } = require("../dist/lang");
+import osLocale from "os-locale";
+import meow from "meow";
+import { run } from "../dist/index.js";
+import { getDefaultLang } from  "../dist/lang.js";
 
 const {
     HTTP_PROXY,

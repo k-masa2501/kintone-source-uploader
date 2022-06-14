@@ -62,4 +62,6 @@ class Semaphore {
         });
     }
 }
-exports.Semaphore = Semaphore;
+
+export default Semaphore;
+
