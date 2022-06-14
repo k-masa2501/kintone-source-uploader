@@ -72,7 +72,7 @@ function readyForUpload(browser, domain, userName, password, lang) {
         console.log(`Open ${loginUrl}`);
         yield page.goto(loginUrl);
         try {
-            yield page.waitFor(".form-username-slash", { timeout: TIMEOUT_MS });
+            yield page.waitForTimeout(".form-username-slash", { timeout: TIMEOUT_MS });
         } catch (e) {
             console.log(chalk_1.default.red(msg("Error_cannotOpenLogin")));
             process.exit(1);
