@@ -5,7 +5,7 @@
 
 "use strict";
 
-import osLocale from "os-locale";
+import { osLocaleSync } from 'os-locale';
 import meow from "meow";
 import { run } from "../dist/index.js";
 import { getDefaultLang } from  "../dist/lang.js";
@@ -45,6 +45,7 @@ const cli = meow(
     proxy: HTTPS_PROXY or HTTP_PROXY
 `,
     {
+        importMeta: import.meta,
         flags: {
             domain: {
                 type: "string",
@@ -72,7 +73,7 @@ const cli = meow(
             },
             lang: {
                 type: "string",
-                default: getDefaultLang(osLocale.sync())
+                default: getDefaultLang(osLocaleSync())
             },
             customSrc: {
                 type: "string",
