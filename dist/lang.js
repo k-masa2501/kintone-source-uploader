@@ -3,7 +3,7 @@
 // https://github.com/kintone/plugin-uploader/blob/master/LICENSE
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+//Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Get a default language based on LANG environment value
  * @param lang
@@ -11,4 +11,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 function getDefaultLang(lang) {
     return lang && lang.startsWith("ja") ? "ja" : "en";
 }
-exports.getDefaultLang = getDefaultLang;
+
+export { getDefaultLang };

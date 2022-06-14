@@ -10,11 +10,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     result["default"] = mod;
     return result;
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const inquirer = __importStar(require("inquirer"));
-const messages_1 = require("./messages");
-exports.inquireParams = ({ username, password, domain, lang }) => {
-    const m = messages_1.getBoundMessage(lang);
+
+import inquirer from "inquirer";
+import {getBoundMessage} from "./messages.js";
+
+const inquireParams = ({ username, password, domain, lang }) => {
+    const m = getBoundMessage(lang);
     const questions = [
         {
             type: "input",
@@ -45,3 +46,5 @@ exports.inquireParams = ({ username, password, domain, lang }) => {
         .prompt(questions)
         .then(answers => Object.assign({ username, password, domain }, answers));
 };
+
+export { inquireParams } ;

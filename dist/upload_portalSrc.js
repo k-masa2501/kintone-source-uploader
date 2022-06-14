@@ -14,14 +14,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-const chalk_1 = __importDefault(require("chalk"));
-const fs_1 = __importDefault(require("fs"));
-const puppeteer_1 = __importDefault(require("puppeteer"));
-const messages_1 = __importDefault(require("./messages"));
-const { Validator } = require('jsonschema');
-const path = require('path');
-const os = require('os');
+
+import _chalk_ from "chalk";
+const chalk_1 = __importDefault(_chalk_);
+import _fs_ from "fs";
+const fs_1 = __importDefault(_fs_);
+import _puppeteer_ from "puppeteer";
+const puppeteer_1 = __importDefault(_puppeteer_);
+import { getBoundMessage } from "./messages.js";
+const messages_1 = { getBoundMessage };
+import { Validator } from 'jsonschema';
+import path from 'path';
+import os from 'os';
 
 const TIMEOUT_MS = 30000;
 const TIMEOUT_MS100 = 100;
@@ -523,4 +527,5 @@ String.prototype.pathReplace = function () {
     }
 }
 
-exports.portalUpload_run = run;
+const portalUpload_run = run;
+export { portalUpload_run };

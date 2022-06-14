@@ -1,9 +1,9 @@
-const { run } = require("../dist/index.js");
-const { customizeUpload_run } = require("../dist/upload_customizeSrc");
-const { pluginUpload_run } = require("../dist/upload_plugin.js");
-const { portalUpload_run } = require("../dist/upload_portalSrc.js");
-const sinon = require('sinon');
-const chai = require('chai');
+import { run } from "../dist/index.js";
+import  customizeUpload_run  from "../dist/upload_customizeSrc.js";
+import { pluginUpload_run } from "../dist/upload_plugin.js";
+import { portalUpload_run } from "../dist/upload_portalSrc.js";
+import sinon from 'sinon';
+import chai from 'chai';
 function sleep(time) {
     'use strict';
     return new Promise((resolve, reject) => {
